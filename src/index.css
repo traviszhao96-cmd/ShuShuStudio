@@ -1,0 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Noto+Serif+SC:wght@500;600;700&display=swap');
+
+:root {
+  font-family: 'IBM Plex Sans', sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #362a22;
+  background:
+    radial-gradient(circle at top, #f7ebda 0%, #efe2cf 32%, #eadbc7 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --tone-ink: #2f241d;
+  --tone-muted: #6f6256;
+  --tone-accent: #b16039;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+body,
+button,
+input,
+select {
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+h1,
+h2 {
+  font-family: 'Noto Serif SC', serif;
+  color: var(--tone-ink);
+  line-height: 1.12;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.3rem, 5vw, 4.4rem);
+  letter-spacing: -0.04em;
+}
+
+h2 {
+  font-size: clamp(1.45rem, 2.2vw, 2rem);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
+}

@@ -1,0 +1,52 @@
+BEGIN TRANSACTION;
+
+DELETE FROM cases
+WHERE imported_from = 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg';
+
+INSERT INTO cases (name, gender, solar_date, source_section, source_order, imported_from, note) VALUES
+('allison', '女', '1989-10-05', 'A', 1, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('阿汤', '女', '1995-11-11', 'A', 2, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('阿汤 男朋友', '男', '1992-08-12', 'A', 3, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('爸', '男', '1965-03-14', 'B', 4, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('Carrie', '女', '1994-07-25', 'C', 5, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('崔', '女', '1994-08-17', 'C', 6, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('崔爸', '男', '1966-09-02', 'C', 7, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('大瓶', '女', '1992-07-29', 'D', 8, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('黄仁勋', '男', '1963-02-17', 'H', 9, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('james', '男', '1998-11-29', 'J', 10, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('Jennie', '女', '1996-01-11', 'J', 11, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('jeremy', '男', '1992-03-09', 'J', 12, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('k', '男', '1991-08-19', 'K', 13, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('kiky', '女', '1999-07-08', 'K', 14, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('姥姥', '女', '1948-05-20', 'L', 15, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('姥爷', '男', '1939-06-15', 'L', 16, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('雷', '男', '1969-12-16', 'L', 17, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('妈', '女', '1971-04-30', 'M', 18, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('梦迪', '女', '1995-09-08', 'M', 19, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('梦阳', '女', '1992-08-27', 'M', 20, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('muki', '女', '1993-10-05', 'M', 21, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('倪可心', '女', '1996-03-01', 'N', 22, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('Patric', '男', '2003-04-02', 'P', 23, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('乔布斯', '男', '1955-02-24', 'Q', 24, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('戚继光', '男', '1828-11-09', 'Q', 25, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('ruari', '男', '1992-06-17', 'R', 26, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('sam', '男', '2000-03-21', 'S', 27, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('selim', '男', '1991-06-17', 'S', 28, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('苏轼', '男', '1037-01-08', 'S', 29, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', '按史实修正为苏轼公历生日 1037-01-08；截图中的 2057-01-06 未采用。'),
+('涛', '男', '1997-12-29', 'T', 30, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('thomas', '男', '1994-03-21', 'T', 31, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('图图', '男', '2025-01-05', 'T', 32, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('wangzhuo', '女', '1996-02-10', 'W', 33, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('小唐', '女', '1997-09-08', 'X', 34, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('小姨', '女', '1971-02-26', 'X', 35, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('小鱼', '男', '2023-02-05', 'X', 36, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('徐薇', '女', '1993-05-29', 'X', 37, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('叶菲菲', '女', '1993-01-24', 'Y', 38, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('yjy', '女', '1997-10-09', 'Y', 39, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('张曼婷', '女', '1999-02-03', 'Z', 40, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('赵', '男', '1996-03-19', 'Z', 41, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('朱妈', '女', '1969-06-12', 'Z', 42, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('zoey', '女', '1997-10-25', 'Z', 43, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL),
+('zoey老公', '男', '1996-11-20', 'Z', 44, 'img_v3_02115_f1dcc6d0-5535-4e19-9b38-772fa8bc98hu.jpg', NULL);
+
+COMMIT;
