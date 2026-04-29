@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "sync:cases": "node scripts/export-cases-from-sqlite.mjs",
+    "sync:cases": "node scripts/migrate-cases-db.mjs && node scripts/export-cases-from-sqlite.mjs",
     "predev": "npm run sync:cases",
     "prebuild": "npm run sync:cases",
     "dev": "vite",

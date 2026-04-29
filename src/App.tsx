@@ -2,30 +2,50 @@ import { useDeferredValue, useMemo, useState } from 'react'
 import { CaseHeaderPanel } from './components/CaseHeaderPanel'
 import { ChartStage } from './components/ChartStage'
 import { InsightSidebar } from './components/InsightSidebar'
+import { ReportPanel } from './components/ReportPanel'
+import { TimelineToolbar } from './components/TimelineToolbar'
 import { caseGroups, caseRecords, defaultCase } from './data'
 import type { CaseGroupFilter } from './data'
-import { buildCasePreview, buildChartSummary } from './utils'
+import type { CaseRecord, WorkspaceMode } from './types'
+import { buildCasePreview, buildSihuaRiskSummary } from './utils'
 import './App.css'
 
+const CASE_DRAFT_STORAGE_KEY = 'ssmaster-case-drafts'
+
 function App() {
+  const [casesState, setCasesState] = useState<CaseRecord[]>(() => {
+    if (typeof window === 'undefined') return caseRecords
+
+    const raw = window.localStorage.getItem(CASE_DRAFT_STORAGE_KEY)
+    if (!raw) return caseRecords
+
+    try {
+      return JSON.parse(raw) as CaseRecord[]
+    } catch {
+      return caseRecords
+    }
+  })
   const [activeCaseId, setActiveCaseId] = useState(defaultCase.id)
   const [activeGroup, setActiveGroup] = useState<CaseGroupFilter>('全部')
   const [isBrowserOpen, setIsBrowserOpen] = useState(false)
+  const [isCaseListEditing, setIsCaseListEditing] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [mode, setMode] = useState<WorkspaceMode>('sanhe')
+  const [timelineScope, setTimelineScope] = useState<'大限' | '流年' | '流月' | '流日'>('流年')
+  const [timelineYear, setTimelineYear] = useState(2026)
 
-  const activeCase = caseRecords.find((item) => item.id === activeCaseId) ?? defaultCase
+  const activeCase = casesState.find((item) => item.id === activeCaseId) ?? casesState[0] ?? defaultCase
   const deferredCase = useDeferredValue(activeCase)
-  const chart = buildChartSummary(deferredCase)
 
   const visibleCases = useMemo(() => {
     const scoped =
-      activeGroup === '全部'
-        ? caseRecords
-        : caseRecords.filter((item) => item.group === activeGroup)
+      activeGroup === '全部' ? casesState : casesState.filter((item) => item.group === activeGroup)
 
     return scoped.map(buildCasePreview)
-  }, [activeGroup])
+  }, [activeGroup, casesState])
 
   const activePreview = useMemo(() => buildCasePreview(activeCase), [activeCase])
+  const sihuaRisks = useMemo(() => buildSihuaRiskSummary(activeCase), [activeCase])
 
   function handleSetGroup(group: CaseGroupFilter) {
     setActiveGroup(group)
@@ -34,9 +54,51 @@ function App() {
 
     if (activeCase.group === group) return
 
-    const firstMatch = caseRecords.find((item) => item.group === group)
+    const firstMatch = casesState.find((item) => item.group === group)
     if (firstMatch) {
       setActiveCaseId(firstMatch.id)
+    }
+  }
+
+  function handleUpdateCase(caseId: string, patch: Partial<CaseRecord>) {
+    setCasesState((current) => {
+      const next = current.map((item) => (item.id === caseId ? { ...item, ...patch } : item))
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem(CASE_DRAFT_STORAGE_KEY, JSON.stringify(next))
+      }
+      setSaveStatus('idle')
+      return next
+    })
+  }
+
+  async function handleSaveCases() {
+    setSaveStatus('saving')
+
+    try {
+      const response = await fetch('/api/cases/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cases: casesState.map((item) => ({
+            id: item.id,
+            name: item.name,
+            group: item.group,
+            birthTimeText: item.birthTimeText,
+            birthTime: item.birthTime,
+          })),
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Save failed with status ${response.status}`)
+      }
+
+      window.localStorage.removeItem(CASE_DRAFT_STORAGE_KEY)
+      setSaveStatus('saved')
+    } catch {
+      setSaveStatus('error')
     }
   }
 
@@ -52,16 +114,32 @@ function App() {
         groups={caseGroups}
         activeCase={activePreview}
         visibleCases={visibleCases}
+        isEditing={isCaseListEditing}
+        saveStatus={saveStatus}
         onToggleOpen={() => setIsBrowserOpen((value) => !value)}
         onActivateCase={setActiveCaseId}
         onSetGroup={handleSetGroup}
+        onToggleEdit={() => setIsCaseListEditing((value) => !value)}
+        onSaveCases={handleSaveCases}
+        onUpdateCase={handleUpdateCase}
         onAddCase={() => {}}
       />
 
       <main className="workspace" data-slot="workspace">
-        <ChartStage config={deferredCase} />
-        <InsightSidebar chart={chart} />
+        <div className="workspace-main-column">
+          <ChartStage config={deferredCase} mode={mode} onChangeMode={setMode} />
+          <TimelineToolbar
+            activeScope={timelineScope}
+            activeYear={timelineYear}
+            onSetScope={setTimelineScope}
+            onShiftYear={(delta) => setTimelineYear((year) => year + delta)}
+          />
+        </div>
+
+        <InsightSidebar mode={mode} risks={sihuaRisks} />
       </main>
+
+      <ReportPanel mode={mode} />
     </div>
   )
 }

@@ -14,6 +14,14 @@ const sql = `
     name,
     gender,
     solar_date,
+    birth_time_text,
+    birth_time_index,
+    birth_time_source,
+    manual_group,
+    bazi_year_pillar,
+    bazi_month_pillar,
+    bazi_day_pillar,
+    bazi_hour_pillar,
     source_section,
     source_order,
     imported_from,
@@ -75,16 +83,39 @@ function inferGender(gender) {
 }
 
 function toCaseRecord(row) {
+  const hasBazi =
+    row.bazi_year_pillar &&
+    row.bazi_month_pillar &&
+    row.bazi_day_pillar
+
+  const birthTimeText = row.birth_time_text ?? '12:00'
+  const birthTimeIndex = Number.isInteger(row.birth_time_index) ? row.birth_time_index : 6
+  const timeNote =
+    row.birth_time_source === 'bazi_match'
+      ? '截图导入，时间按八字四柱精确匹配。'
+      : row.birth_time_source === 'bazi_branch'
+        ? '截图导入，时间按八字时柱折算到对应时辰。'
+        : '截图导入，八字时柱缺失；时辰暂以午时占位。'
+
   return {
     id: `db-case-${row.id}`,
     name: row.name,
-    group: inferGroup(row.name),
-    note: row.note ?? '截图导入，仅可见生日；时辰暂以午时占位。',
+    group: row.manual_group ?? inferGroup(row.name),
+    note: row.note ?? timeNote,
     birthday: row.solar_date,
-    birthTimeText: '12:00',
-    birthTime: 6,
+    birthTimeText,
+    birthTime: birthTimeIndex,
     birthdayType: 'solar',
     gender: inferGender(row.gender),
+    birthTimeSource: row.birth_time_source ?? 'placeholder',
+    bazi: hasBazi
+      ? {
+          yearPillar: row.bazi_year_pillar,
+          monthPillar: row.bazi_month_pillar,
+          dayPillar: row.bazi_day_pillar,
+          hourPillar: row.bazi_hour_pillar ?? null,
+        }
+      : null,
   }
 }
 

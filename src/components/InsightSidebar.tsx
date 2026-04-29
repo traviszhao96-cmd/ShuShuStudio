@@ -1,82 +1,51 @@
-import type { ChartSummary } from '../types'
+import type { SihuaRiskPalace, WorkspaceMode } from '../types'
 
 type InsightSidebarProps = {
-  chart: ChartSummary | null
+  risks?: SihuaRiskPalace[]
+  mode: WorkspaceMode
 }
 
-export function InsightSidebar({ chart }: InsightSidebarProps) {
-  const palaceHighlights = chart?.palaces.slice(0, 4) ?? []
-
+export function InsightSidebar({ risks = [], mode }: InsightSidebarProps) {
   return (
     <aside className="insight-column" data-slot="insight-column">
-      <section className="summary-card" data-slot="insight-summary">
-        <p className="section-kicker">Quick Read</p>
-        <h2>盘面摘要</h2>
-
-        {chart ? (
-          <>
-            <div className="stat-grid">
-              <article>
-                <span>农历</span>
-                <strong>{chart.lunarDate}</strong>
-              </article>
-              <article>
-                <span>五行局</span>
-                <strong>{chart.fiveElementsClass}</strong>
-              </article>
-              <article>
-                <span>命宫</span>
-                <strong>{chart.soulPalace}</strong>
-              </article>
-              <article>
-                <span>身宫</span>
-                <strong>{chart.bodyPalace}</strong>
-              </article>
-              <article>
-                <span>命主</span>
-                <strong>{chart.soul}</strong>
-              </article>
-              <article>
-                <span>身主</span>
-                <strong>{chart.body}</strong>
-              </article>
+      {mode === 'sihua' ? (
+        <section className="feature-card risk-card-panel" data-slot="insight-risk">
+          <p className="section-kicker">Risk Focus</p>
+          <h2>高风险宫位</h2>
+          {risks.length > 0 ? (
+            <div className="risk-palace-list">
+              {risks.map((risk) => (
+                <article key={risk.palace} className="risk-palace-item">
+                  <div className="risk-palace-head">
+                    <strong>{risk.palace}</strong>
+                    <span>
+                      对宫 {risk.opposite} · {risk.palaceType}
+                    </span>
+                  </div>
+                  <p className="risk-palace-stars">
+                    主星：{risk.majorStars.length > 0 ? risk.majorStars.join('、') : '无主星'}
+                  </p>
+                  <ul>
+                    {risk.reasons.slice(0, 3).map((reason) => (
+                      <li key={reason}>{reason}</li>
+                    ))}
+                  </ul>
+                </article>
+              ))}
             </div>
-
-            <div className="identity-strip">
-              <span>{chart.sign}</span>
-              <span>{chart.zodiac}</span>
-              <span>{chart.timeRange}</span>
-            </div>
-          </>
-        ) : (
-          <p className="error-text">当前输入无法生成命盘，请检查日期和时辰。</p>
-        )}
-      </section>
-
-      <section className="palace-card" data-slot="insight-palaces">
-        <p className="section-kicker">Palace Focus</p>
-        <h2>前四宫速览</h2>
-
-        <div className="palace-list">
-          {palaceHighlights.map((palace) => (
-            <article key={`${palace.name}-${palace.earthlyBranch}`} className="palace-item">
-              <div className="palace-title">
-                <strong>{palace.name}</strong>
-                <span>{palace.earthlyBranch}</span>
-              </div>
-              <p>{palace.majorStars.join(' / ') || '无主星'}</p>
-            </article>
-          ))}
-        </div>
-      </section>
+          ) : (
+            <p className="risk-empty-text">当前命例还没有汇总出可展示的高风险宫位。</p>
+          )}
+        </section>
+      ) : null}
 
       <section className="feature-card" data-slot="insight-feature">
-        <p className="section-kicker">Why This Layout</p>
-        <h2>这页适合继续往下做什么</h2>
+        <p className="section-kicker">Skill Pipeline</p>
+        <h2>{mode === 'sihua' ? '四化分析输出区' : mode === 'bazi' ? '八字分析输出区' : '三合分析输出区'}</h2>
         <ul>
-          <li>接账号体系后，可以演化成个人排盘工作台。</li>
-          <li>把右侧摘要换成规则引擎输出，就能接原局分析或风险扫描。</li>
-          <li>顶部表单已经是完整入口，后面接 API 或本地存档都很自然。</li>
+          <li>核心结论：这里放 skill 归纳后的主轴判断与结论浓缩。</li>
+          <li>关键链条：这里放三合结构、四化链路或八字格局的重点。</li>
+          <li>待验证点：这里放需要结合经历、六亲或校时补证的项目。</li>
         </ul>
       </section>
     </aside>

@@ -1,5 +1,13 @@
 export type CalendarType = 'solar' | 'lunar'
 export type GenderType = 'male' | 'female'
+export type BirthTimeSource = 'manual' | 'bazi_match' | 'bazi_branch' | 'placeholder'
+
+export type BaziPillars = {
+  yearPillar: string
+  monthPillar: string
+  dayPillar: string
+  hourPillar: string | null
+}
 
 export type ChartConfig = {
   birthday: string
@@ -7,6 +15,8 @@ export type ChartConfig = {
   birthTime: number
   birthdayType: CalendarType
   gender: GenderType
+  birthTimeSource?: BirthTimeSource
+  bazi?: BaziPillars | null
 }
 
 export type CaseRecord = ChartConfig & {
@@ -31,4 +41,14 @@ export type ChartSummary = {
     earthlyBranch: string
     majorStars: string[]
   }>
+}
+
+export type WorkspaceMode = 'sanhe' | 'sihua' | 'bazi'
+
+export type SihuaRiskPalace = {
+  palace: string
+  opposite: string
+  palaceType: '人宫' | '物宫'
+  majorStars: string[]
+  reasons: string[]
 }
