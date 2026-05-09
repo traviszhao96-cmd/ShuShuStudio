@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS cases (
   birth_time_text TEXT,
   birth_time_index INTEGER CHECK (birth_time_index BETWEEN 0 AND 12),
   birth_time_source TEXT CHECK (birth_time_source IN ('manual', 'bazi_match', 'bazi_branch', 'placeholder')),
-  manual_group TEXT CHECK (manual_group IN ('家人', '同学', '同事', '名人', '朋友')),
+  manual_group TEXT CHECK (manual_group IN ('家人', '同学', '同事', '名人', '朋友', '评测')),
   bazi_year_pillar TEXT,
   bazi_month_pillar TEXT,
   bazi_day_pillar TEXT,

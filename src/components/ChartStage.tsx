@@ -3,11 +3,20 @@ import { Iztrolabe } from 'react-iztro'
 import type { ChartConfig, WorkspaceMode } from '../types'
 import { SihuaAstrolabe } from './SihuaAstrolabe'
 
+type TimelineOverlay = {
+  displayMode: 'decade' | 'yearly'
+  activeYear: number
+  decadalPalaceLabelsByPalace: Map<number, string>
+  decadeYearLabelsByPalace: Map<number, string>
+  yearlyPalaceLabelsByPalace: Map<number, string>
+}
+
 type ChartStageProps = {
   config: ChartConfig
   mode: WorkspaceMode
   onChangeMode: (mode: WorkspaceMode) => void
   headerRight?: ReactNode
+  timelineOverlay?: TimelineOverlay
 }
 
 const modeItems: Array<{ value: WorkspaceMode; label: string }> = [
@@ -16,7 +25,7 @@ const modeItems: Array<{ value: WorkspaceMode; label: string }> = [
   { value: 'bazi', label: '八字' },
 ]
 
-export function ChartStage({ config, mode, onChangeMode, headerRight }: ChartStageProps) {
+export function ChartStage({ config, mode, onChangeMode, headerRight, timelineOverlay }: ChartStageProps) {
   return (
     <section className="chart-stage" data-slot="chart-stage">
       <div className="panel-heading" data-slot="chart-header">
@@ -51,7 +60,7 @@ export function ChartStage({ config, mode, onChangeMode, headerRight }: ChartSta
             birthdayType={config.birthdayType}
             gender={config.gender}
             centerPalaceAlign
-            horoscopeDate={new Date()}
+            horoscopeDate={new Date(`${timelineOverlay?.activeYear ?? 2026}-06-01T12:00:00`)}
             horoscopeHour={config.birthTime}
           />
         </div>
@@ -67,6 +76,7 @@ export function ChartStage({ config, mode, onChangeMode, headerRight }: ChartSta
           <SihuaAstrolabe
             key={`${config.birthday}-${config.birthTime}-${config.birthdayType}-${config.gender}`}
             config={config}
+            timelineOverlay={timelineOverlay}
           />
         </div>
       ) : (

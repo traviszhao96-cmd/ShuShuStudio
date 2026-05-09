@@ -1,11 +1,12 @@
-import type { SihuaRiskPalace, WorkspaceMode } from '../types'
+import type { SihuaRiskPalace, WorkspaceMode, ZiweiInsightPayload } from '../types'
 
 type InsightSidebarProps = {
   risks?: SihuaRiskPalace[]
   mode: WorkspaceMode
+  insights?: ZiweiInsightPayload | null
 }
 
-export function InsightSidebar({ risks = [], mode }: InsightSidebarProps) {
+export function InsightSidebar({ risks = [], mode, insights }: InsightSidebarProps) {
   return (
     <aside className="insight-column" data-slot="insight-column">
       {mode === 'sihua' ? (
@@ -40,13 +41,38 @@ export function InsightSidebar({ risks = [], mode }: InsightSidebarProps) {
       ) : null}
 
       <section className="feature-card" data-slot="insight-feature">
-        <p className="section-kicker">Skill Pipeline</p>
-        <h2>{mode === 'sihua' ? '四化分析输出区' : mode === 'bazi' ? '八字分析输出区' : '三合分析输出区'}</h2>
-        <ul>
-          <li>核心结论：这里放 skill 归纳后的主轴判断与结论浓缩。</li>
-          <li>关键链条：这里放三合结构、四化链路或八字格局的重点。</li>
-          <li>待验证点：这里放需要结合经历、六亲或校时补证的项目。</li>
-        </ul>
+        <p className="section-kicker">Ziwei Doushu Skill</p>
+        <h2>{mode === 'bazi' ? '八字分析参考' : '论命规则输出'}</h2>
+        {insights ? (
+          <div className="skill-insight-panel">
+            <section className="skill-insight-block">
+              <strong>{insights.headline}</strong>
+              <p>{insights.summary}</p>
+            </section>
+
+            {insights.sections.map((section) => (
+              <section key={section.title} className="skill-insight-block">
+                <strong>{section.title}</strong>
+                <ul>
+                  {section.points.map((point) => (
+                    <li key={point}>{point}</li>
+                  ))}
+                </ul>
+              </section>
+            ))}
+
+            <section className="skill-insight-block">
+              <strong>方法依据</strong>
+              <ul>
+                {insights.methodology.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </section>
+          </div>
+        ) : (
+          <p className="risk-empty-text">当前还没有生成可展示的论命规则输出。</p>
+        )}
       </section>
     </aside>
   )

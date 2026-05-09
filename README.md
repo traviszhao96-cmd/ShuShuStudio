@@ -1,73 +1,54 @@
-# React + TypeScript + Vite
+# ShuShuMaser
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+`ShuShuMaser` is a local astrology workspace built around:
 
-Currently, two official plugins are available:
+- Zi Wei Dou Shu charting and analysis
+- BaZi / Four Pillars support
+- case management with a local SQLite-backed workflow
+- a browser-based product surface for `三合 / 四化 / 八字`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Project shape
 
-## React Compiler
+- `src/`
+  Frontend application.
+- `db/`
+  Schema and seed material for the local case database.
+- `scripts/`
+  Data migration and export scripts.
+- `docs/`
+  Living knowledge base for product context, rules, and next steps.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Knowledge base
 
-## Expanding the ESLint configuration
+Start here:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- [`docs/README.md`](/Users/travis.zhao/SSMaster/docs/README.md)
+- [`docs/context-log.md`](/Users/travis.zhao/SSMaster/docs/context-log.md)
+- [`docs/product-decisions.md`](/Users/travis.zhao/SSMaster/docs/product-decisions.md)
+- [`docs/sihua-display-rules.md`](/Users/travis.zhao/SSMaster/docs/sihua-display-rules.md)
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Local workflow
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Install dependencies:
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Start dev server:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+npm run dev
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Sync case data into the frontend:
+
+```bash
+npm run sync:cases
+```
+
+Build:
+
+```bash
+npm run build
 ```

@@ -11,7 +11,7 @@ const exportScriptPath = resolve(root, 'scripts/export-cases-from-sqlite.mjs')
 type PersistCasePayload = {
   id: string
   name: string
-  group: '家人' | '同学' | '同事' | '名人' | '朋友'
+  group: '家人' | '同学' | '同事' | '名人' | '朋友' | '评测'
   birthTimeText: string
   birthTime: number
 }
@@ -68,7 +68,7 @@ export default defineConfig({
                   birth_time_text = '${escapeSql(item.birthTimeText)}',
                   birth_time_index = ${item.birthTime},
                   birth_time_source = 'manual',
-                  manual_group = '${escapeSql(item.group)}'
+                  manual_group = ${item.group === '评测' ? 'NULL' : `'${escapeSql(item.group)}'`}
                 WHERE id = ${id};
               `)
             }

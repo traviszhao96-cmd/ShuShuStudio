@@ -5,13 +5,18 @@ import type { ChartConfig } from '../types'
 
 type SihuaAstrolabeProps = {
   config: ChartConfig
+  timelineOverlay?: {
+    displayMode: 'decade' | 'yearly'
+    activeYear: number
+    decadalPalaceLabelsByPalace: Map<number, string>
+    decadeYearLabelsByPalace: Map<number, string>
+    yearlyPalaceLabelsByPalace: Map<number, string>
+  }
 }
 
 type MutagenType = '禄' | '权' | '科' | '忌'
 type EdgeDirection = 'top' | 'right' | 'bottom' | 'left'
 type PalacePoint = { x: number; y: number }
-type VectorLane = { start: PalacePoint; end: PalacePoint }
-
 const MUTAGEN_ORDER: MutagenType[] = ['禄', '权', '科', '忌']
 const PALACE_OUTER_EDGE: Record<number, EdgeDirection> = {
   0: 'bottom',
@@ -26,14 +31,6 @@ const PALACE_OUTER_EDGE: Record<number, EdgeDirection> = {
   9: 'bottom',
   10: 'bottom',
   11: 'bottom',
-}
-const CENTER_VECTOR_LANES: Record<number, VectorLane> = {
-  0: { start: { x: 33, y: 71 }, end: { x: 67, y: 29 } },
-  1: { start: { x: 28, y: 62 }, end: { x: 72, y: 38 } },
-  2: { start: { x: 28, y: 38 }, end: { x: 72, y: 62 } },
-  3: { start: { x: 33, y: 29 }, end: { x: 67, y: 71 } },
-  4: { start: { x: 41, y: 28 }, end: { x: 59, y: 72 } },
-  5: { start: { x: 59, y: 28 }, end: { x: 41, y: 72 } },
 }
 const SIHUA_VISIBLE_STARS = new Set([
   '廉贞',
@@ -65,7 +62,9 @@ type PalaceWithStars = {
   heavenlyStem: string
   earthlyBranch: string
   isBodyPalace?: boolean
+  isOriginalPalace?: boolean
   selfMutaged?: (withMutagens: MutagenType | MutagenType[]) => boolean
+  fliesTo?: (to: string, withMutagens: MutagenType | MutagenType[]) => boolean
   majorStars: PalaceStar[]
   minorStars: PalaceStar[]
   adjectiveStars: PalaceStar[]
@@ -78,6 +77,40 @@ type HoverMutagenRow = {
   heavenlyStem: string
   earthlyBranch: string
   isVisibleMajor: boolean
+}
+
+type InwardArrow = {
+  key: string
+  sourcePalaceIndex: number
+  targetPalaceIndex: number
+  type: MutagenType
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+}
+
+type SourceMutagenGroup = {
+  sourcePalaceIndex: number
+  arrows: Array<{
+    type: MutagenType
+    targetPalaceIndex: number
+  }>
+}
+
+const PALACE_EDGE_ANCHORS: Record<number, PalacePoint> = {
+  0: { x: 25.2, y: 74.8 },
+  1: { x: 25.2, y: 62.5 },
+  2: { x: 25.2, y: 37.5 },
+  3: { x: 25.2, y: 25.2 },
+  4: { x: 37.5, y: 25.2 },
+  5: { x: 62.5, y: 25.2 },
+  6: { x: 74.8, y: 25.2 },
+  7: { x: 74.8, y: 37.5 },
+  8: { x: 74.8, y: 62.5 },
+  9: { x: 74.8, y: 74.8 },
+  10: { x: 62.5, y: 74.8 },
+  11: { x: 37.5, y: 74.8 },
 }
 
 function findStarPalace(palaces: PalaceWithStars[], starName: string) {
@@ -124,7 +157,7 @@ function getSelfMutagenStarMap(palace: PalaceWithStars) {
   return byStar
 }
 
-function buildArrowEndpoints(from: PalacePoint, to: PalacePoint, offset = 0) {
+function buildArrowEndpoints(from: PalacePoint, to: PalacePoint, offset = 0, trim = 1.2) {
   const dx = to.x - from.x
   const dy = to.y - from.y
   const distance = Math.hypot(dx, dy) || 1
@@ -132,8 +165,6 @@ function buildArrowEndpoints(from: PalacePoint, to: PalacePoint, offset = 0) {
   const uy = dy / distance
   const px = -uy
   const py = ux
-  const trim = 8
-
   return {
     x1: from.x + ux * trim + px * offset,
     y1: from.y + uy * trim + py * offset,
@@ -142,21 +173,32 @@ function buildArrowEndpoints(from: PalacePoint, to: PalacePoint, offset = 0) {
   }
 }
 
-function getLaneForPalace(index: number, oppositeIndex: number) {
-  const pairKey = Math.min(index, oppositeIndex)
-  const lane = CENTER_VECTOR_LANES[pairKey]
+function buildPairedArrowEndpoints(
+  sourceIndex: number,
+  targetIndex: number,
+  offset = 0,
+  trim = 1.8,
+) {
+  const canonicalSourceIndex = Math.min(sourceIndex, targetIndex)
+  const canonicalTargetIndex = Math.max(sourceIndex, targetIndex)
+  const canonicalFrom = PALACE_EDGE_ANCHORS[canonicalSourceIndex] ?? { x: 50, y: 50 }
+  const canonicalTo = PALACE_EDGE_ANCHORS[canonicalTargetIndex] ?? { x: 50, y: 50 }
+  const effectiveOffset = sourceIndex === canonicalSourceIndex ? offset : -offset
+  const canonicalPoints = buildArrowEndpoints(canonicalFrom, canonicalTo, effectiveOffset, trim)
 
-  if (!lane) return undefined
+  if (sourceIndex === canonicalSourceIndex) {
+    return canonicalPoints
+  }
 
-  return index === pairKey
-    ? lane
-    : {
-        start: lane.end,
-        end: lane.start,
-      }
+  return {
+    x1: canonicalPoints.x2,
+    y1: canonicalPoints.y2,
+    x2: canonicalPoints.x1,
+    y2: canonicalPoints.y1,
+  }
 }
 
-export function SihuaAstrolabe({ config }: SihuaAstrolabeProps) {
+export function SihuaAstrolabe({ config, timelineOverlay }: SihuaAstrolabeProps) {
   const { astrolabe } = useIztro({
     birthday: config.birthday,
     birthTime: config.birthTime,
@@ -182,10 +224,40 @@ export function SihuaAstrolabe({ config }: SihuaAstrolabeProps) {
 
     return { byPalace, byStar }
   }, [palaces])
-  const hoveredSelfMutagens = hoveredPalace ? selfMutagenLookup.byPalace.get(hoveredPalace.index) ?? [] : []
-  const hoveredOppositePalaceIndex = hoveredPalace ? (hoveredPalace.index + 6) % 12 : null
-  const hoveredOppositePalace =
-    hoveredOppositePalaceIndex === null ? undefined : palaces.find((palace) => palace.index === hoveredOppositePalaceIndex)
+  const sourceMutagenGroups = useMemo<SourceMutagenGroup[]>(() => {
+    return palaces
+      .map((sourcePalace) => {
+        const oppositePalaceIndex = (sourcePalace.index + 6) % 12
+        const oppositePalace = palaces.find((palace) => palace.index === oppositePalaceIndex)
+        if (!oppositePalace) {
+          return {
+            sourcePalaceIndex: sourcePalace.index,
+            arrows: [],
+          }
+        }
+
+        const mutagenStars = getMutagensByHeavenlyStem(sourcePalace.heavenlyStem as never)
+        const arrows = MUTAGEN_ORDER.map((type, index) => {
+          const starName = mutagenStars[index]
+          const targetPalace = starName ? findStarPalace(palaces, starName) : undefined
+
+          if (!targetPalace || targetPalace.index !== oppositePalace.index) {
+            return null
+          }
+
+          return {
+            type,
+            targetPalaceIndex: oppositePalace.index,
+          }
+        }).filter(Boolean) as Array<{ type: MutagenType; targetPalaceIndex: number }>
+
+        return {
+          sourcePalaceIndex: sourcePalace.index,
+          arrows,
+        }
+      })
+      .filter((group) => group.arrows.length > 0)
+  }, [palaces])
 
   const hoveredMutagens: HoverMutagenRow[] = !hoveredPalace
     ? []
@@ -234,20 +306,30 @@ export function SihuaAstrolabe({ config }: SihuaAstrolabeProps) {
     return { byStar, byPalace }
   })()
 
-  const inwardArrows =
-    hoveredPalace && hoveredOppositePalace && hoveredSelfMutagens.length > 0
-      ? hoveredSelfMutagens.map((type, index, collection) => {
-          const lane = getLaneForPalace(hoveredPalace.index, hoveredOppositePalace.index)
-          const offsetSeed = index - (collection.length - 1) / 2
-          const points = lane
-            ? buildArrowEndpoints(lane.start, lane.end, offsetSeed * 2.4)
-            : buildArrowEndpoints({ x: 34, y: 66 }, { x: 66, y: 34 }, offsetSeed * 2.4)
-          return {
-            type,
-            ...points,
-          }
-        })
-      : []
+  const inwardArrows = useMemo<InwardArrow[]>(() => {
+    return sourceMutagenGroups.flatMap((group) => {
+      return group.arrows.map((arrow, index, collection) => {
+        const offsetSeed = index - (collection.length - 1) / 2
+        const pairKey = `${Math.min(group.sourcePalaceIndex, arrow.targetPalaceIndex)}-${Math.max(group.sourcePalaceIndex, arrow.targetPalaceIndex)}`
+        const pairDirectionBias = group.sourcePalaceIndex < arrow.targetPalaceIndex ? -1.15 : 1.15
+        const parallelOffset = offsetSeed * 0.95
+        const points = buildPairedArrowEndpoints(
+          group.sourcePalaceIndex,
+          arrow.targetPalaceIndex,
+          pairDirectionBias + parallelOffset,
+          1.8,
+        )
+
+        return {
+          key: `${pairKey}-${group.sourcePalaceIndex}-${arrow.targetPalaceIndex}-${arrow.type}-${index}`,
+          sourcePalaceIndex: group.sourcePalaceIndex,
+          targetPalaceIndex: arrow.targetPalaceIndex,
+          type: arrow.type,
+          ...points,
+        }
+      })
+    })
+  }, [sourceMutagenGroups])
 
   return (
     <div className="sihua-board">
@@ -255,23 +337,29 @@ export function SihuaAstrolabe({ config }: SihuaAstrolabeProps) {
       {inwardArrows.length > 0 ? (
         <svg className="sihua-arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <defs>
-            <marker id="sihua-arrowhead-禄" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-              <path d="M0,0 L7,3.5 L0,7 Z" fill="#3d8f48" />
+            <marker id="sihua-arrowhead-禄" markerWidth="3.2" markerHeight="3.2" refX="3" refY="1.6" orient="auto">
+              <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#3d8f48" />
             </marker>
-            <marker id="sihua-arrowhead-权" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-              <path d="M0,0 L7,3.5 L0,7 Z" fill="#7d4bba" />
+            <marker id="sihua-arrowhead-权" markerWidth="3.2" markerHeight="3.2" refX="3" refY="1.6" orient="auto">
+              <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#7d4bba" />
             </marker>
-            <marker id="sihua-arrowhead-科" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-              <path d="M0,0 L7,3.5 L0,7 Z" fill="#3569c8" />
+            <marker id="sihua-arrowhead-科" markerWidth="3.2" markerHeight="3.2" refX="3" refY="1.6" orient="auto">
+              <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#3569c8" />
             </marker>
-            <marker id="sihua-arrowhead-忌" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
-              <path d="M0,0 L7,3.5 L0,7 Z" fill="#c44a4a" />
+            <marker id="sihua-arrowhead-忌" markerWidth="3.2" markerHeight="3.2" refX="3" refY="1.6" orient="auto">
+              <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#c44a4a" />
             </marker>
           </defs>
           {inwardArrows.map((arrow) => (
             <line
-              key={`${hoveredPalace?.index}-${arrow.type}`}
-              className={`sihua-inward-arrow type-${arrow.type}`}
+              key={arrow.key}
+              className={`sihua-inward-arrow type-${arrow.type} ${
+                hoveredPalaceIndex !== null &&
+                (hoveredPalaceIndex === arrow.sourcePalaceIndex ||
+                  hoveredPalaceIndex === arrow.targetPalaceIndex)
+                  ? 'is-active'
+                  : ''
+              }`}
               x1={arrow.x1}
               y1={arrow.y1}
               x2={arrow.x2}
@@ -286,18 +374,34 @@ export function SihuaAstrolabe({ config }: SihuaAstrolabeProps) {
         const activeTypes = hoverLookup.byPalace.get(palace.index) ?? []
         const selfStarMap = selfMutagenLookup.byStar.get(palace.index) ?? new Map<string, MutagenType[]>()
         const outerEdge = PALACE_OUTER_EDGE[palace.index] ?? 'top'
+        const decadalPalaceLabel = timelineOverlay?.decadalPalaceLabelsByPalace.get(palace.index)
+        const decadeYearLabel = timelineOverlay?.decadeYearLabelsByPalace.get(palace.index)
+        const yearlyPalaceLabel = timelineOverlay?.yearlyPalaceLabelsByPalace.get(palace.index)
 
         return (
           <section
             key={palace.earthlyBranch}
             className={`sihua-palace ${hoveredPalaceIndex === palace.index ? 'is-hovered' : ''} ${
-              hoveredOppositePalaceIndex === palace.index && hoveredSelfMutagens.length > 0 ? 'is-self-opposite' : ''
+              hoveredPalaceIndex !== null &&
+              inwardArrows.some(
+                (arrow) =>
+                  arrow.sourcePalaceIndex === hoveredPalaceIndex && arrow.targetPalaceIndex === palace.index,
+              )
+                ? 'is-self-opposite'
+                : ''
             }`}
             data-types={activeTypes.join(' ')}
             style={{ gridArea: `g${palace.index}` }}
             onMouseEnter={() => setHoveredPalaceIndex(palace.index)}
             onMouseLeave={() => setHoveredPalaceIndex((current) => (current === palace.index ? null : current))}
           >
+            {timelineOverlay?.displayMode === 'decade' && decadeYearLabel ? (
+              <div className="sihua-timeline-tag sihua-timeline-tag--year">{decadeYearLabel}</div>
+            ) : null}
+            {timelineOverlay?.displayMode === 'yearly' && yearlyPalaceLabel ? (
+              <div className="sihua-timeline-tag sihua-timeline-tag--palace">{yearlyPalaceLabel}</div>
+            ) : null}
+
             <div className="sihua-palace-stars">
               {getVisibleSihuaStars(palace).map((star) => {
                 const hoverType = hoverLookup.byStar.get(star.name)
@@ -328,7 +432,9 @@ export function SihuaAstrolabe({ config }: SihuaAstrolabeProps) {
               <div className="sihua-palace-name">
                 <span>{palace.name}</span>
                 {palace.isBodyPalace ? <em>身</em> : null}
+                {palace.isOriginalPalace ? <em className="is-original">来因</em> : null}
               </div>
+              {decadalPalaceLabel ? <div className="sihua-decadal-tag">{decadalPalaceLabel}</div> : null}
               <div className="sihua-palace-gz">
                 {palace.heavenlyStem}
                 {palace.earthlyBranch}

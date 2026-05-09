@@ -100,7 +100,7 @@ function toCaseRecord(row) {
   return {
     id: `db-case-${row.id}`,
     name: row.name,
-    group: row.manual_group ?? inferGroup(row.name),
+    group: row.imported_from === 'mingli-bench-sample-10' ? '评测' : row.manual_group ?? inferGroup(row.name),
     note: row.note ?? timeNote,
     birthday: row.solar_date,
     birthTimeText,

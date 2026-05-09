@@ -1,4 +1,5 @@
-import type { WorkspaceMode } from '../types'
+import { useState } from 'react'
+import type { CaseRecord, WorkspaceMode } from '../types'
 
 const reportTemplates: Record<
   WorkspaceMode,
@@ -50,10 +51,45 @@ const reportTemplates: Record<
 
 type ReportPanelProps = {
   mode: WorkspaceMode
+  activeCase?: CaseRecord | null
 }
 
-export function ReportPanel({ mode }: ReportPanelProps) {
+function BenchmarkAnswerToggle({ answer }: { answer: string }) {
+  const [isAnswerVisible, setIsAnswerVisible] = useState(false)
+
+  return (
+    <div className="benchmark-answer-block">
+      <button
+        type="button"
+        className="benchmark-answer-toggle"
+        onClick={() => setIsAnswerVisible((visible) => !visible)}
+      >
+        {isAnswerVisible ? '隐藏答案' : '显示答案'}
+      </button>
+      {isAnswerVisible ? <p className="benchmark-answer">标准答案：{answer}</p> : null}
+    </div>
+  )
+}
+
+function parseBenchmarkNote(note: string) {
+  const categoryMatch = note.match(/^【([^】]+)】/)
+  const questionMatch = note.match(/^【[^】]+】(.+?)\s+选项：/)
+  const optionsMatch = note.match(/选项：(.+?)\s+正确答案：/)
+  const answerMatch = note.match(/正确答案：([A-D])/)
+
+  if (!categoryMatch || !questionMatch || !optionsMatch) return null
+
+  return {
+    category: categoryMatch[1],
+    question: questionMatch[1],
+    options: optionsMatch[1].split(' / ').map((item) => item.trim()),
+    answer: answerMatch?.[1] ?? '',
+  }
+}
+
+export function ReportPanel({ mode, activeCase }: ReportPanelProps) {
   const sections = reportTemplates[mode]
+  const benchmarkMeta = activeCase?.group === '评测' ? parseBenchmarkNote(activeCase.note) : null
 
   return (
     <section className="report-panel" data-slot="report-panel">
@@ -72,6 +108,26 @@ export function ReportPanel({ mode }: ReportPanelProps) {
           </article>
         ))}
       </div>
+
+      {benchmarkMeta ? (
+        <div className="report-benchmark-note">
+          <p className="section-kicker">Benchmark Note</p>
+          <h3>
+            {benchmarkMeta.category}题：{benchmarkMeta.question}
+          </h3>
+          <ul>
+            {benchmarkMeta.options.map((option) => (
+              <li key={option}>{option}</li>
+            ))}
+          </ul>
+          {benchmarkMeta.answer ? (
+            <BenchmarkAnswerToggle
+              key={`${activeCase?.id ?? 'unknown'}-${mode}`}
+              answer={benchmarkMeta.answer}
+            />
+          ) : null}
+        </div>
+      ) : null}
     </section>
   )
 }

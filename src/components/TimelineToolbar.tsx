@@ -1,48 +1,75 @@
+import type { TimelineDecadalOption } from '../types'
+
 type TimelineToolbarProps = {
-  activeScope: '大限' | '流年' | '流月' | '流日'
+  decadalOptions: TimelineDecadalOption[]
+  activeDecadalIndex: number
   activeYear: number
-  onSetScope: (scope: '大限' | '流年' | '流月' | '流日') => void
-  onShiftYear: (delta: number) => void
+  displayMode: 'decade' | 'yearly'
+  onSelectDecadal: (decadalIndex: number) => void
+  onSelectYear: (year: number) => void
 }
 
-const scopeItems: Array<'大限' | '流年' | '流月' | '流日'> = ['大限', '流年', '流月', '流日']
-
 export function TimelineToolbar({
-  activeScope,
+  decadalOptions,
+  activeDecadalIndex,
   activeYear,
-  onSetScope,
-  onShiftYear,
+  displayMode,
+  onSelectDecadal,
+  onSelectYear,
 }: TimelineToolbarProps) {
+  const activeDecadal =
+    decadalOptions.find((item) => item.palaceIndex === activeDecadalIndex) ?? decadalOptions[0]
+
   return (
     <section className="timeline-toolbar" data-slot="timeline-toolbar">
       <div className="timeline-summary">
         <p className="section-kicker">Timeline Controls</p>
-        <h2>时间引动</h2>
+        <h2>大运与流年</h2>
       </div>
 
-      <div className="timeline-controls">
-        <div className="scope-switcher">
-          {scopeItems.map((scope) => (
-            <button
-              key={scope}
-              type="button"
-              className={`scope-chip ${activeScope === scope ? 'is-active' : ''}`}
-              onClick={() => onSetScope(scope)}
-            >
-              {scope}
-            </button>
-          ))}
+      <div className="timeline-stack">
+        <div className="timeline-row">
+          <span className="timeline-row-label">大限</span>
+          <div className="timeline-chip-rail">
+            {decadalOptions.map((item) => (
+              <button
+                key={item.palaceIndex}
+                type="button"
+                className={`timeline-chip ${activeDecadalIndex === item.palaceIndex ? 'is-active' : ''}`}
+                onClick={() => onSelectDecadal(item.palaceIndex)}
+              >
+                <strong>
+                  {item.startAge}~{item.endAge}
+                </strong>
+                <span>
+                  {item.heavenlyStem}
+                  {item.earthlyBranch}限
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="year-switcher">
-          <button type="button" className="year-step" onClick={() => onShiftYear(-1)}>
-            上一年
-          </button>
-          <div className="year-pill">{activeYear}</div>
-          <button type="button" className="year-step" onClick={() => onShiftYear(1)}>
-            下一年
-          </button>
-        </div>
+        {activeDecadal ? (
+          <div className="timeline-row">
+            <span className="timeline-row-label">流年</span>
+            <div className="timeline-chip-rail">
+              {activeDecadal.years.map((item) => (
+                <button
+                  key={item.year}
+                  type="button"
+                  className={`timeline-chip timeline-chip--year ${
+                    displayMode === 'yearly' && activeYear === item.year ? 'is-active' : ''
+                  }`}
+                  onClick={() => onSelectYear(item.year)}
+                >
+                  <strong>{item.year}</strong>
+                  <span>{item.nominalAge}岁</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
       </div>
     </section>
   )
