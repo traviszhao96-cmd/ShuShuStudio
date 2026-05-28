@@ -17,6 +17,8 @@ type ChartStageProps = {
   onChangeMode: (mode: WorkspaceMode) => void
   headerRight?: ReactNode
   timelineOverlay?: TimelineOverlay
+  selectedPalaceIndex?: number | null
+  onSelectPalace?: (palaceIndex: number) => void
 }
 
 const modeItems: Array<{ value: WorkspaceMode; label: string }> = [
@@ -25,7 +27,15 @@ const modeItems: Array<{ value: WorkspaceMode; label: string }> = [
   { value: 'bazi', label: '八字' },
 ]
 
-export function ChartStage({ config, mode, onChangeMode, headerRight, timelineOverlay }: ChartStageProps) {
+export function ChartStage({
+  config,
+  mode,
+  onChangeMode,
+  headerRight,
+  timelineOverlay,
+  selectedPalaceIndex = null,
+  onSelectPalace,
+}: ChartStageProps) {
   return (
     <section className="chart-stage" data-slot="chart-stage">
       <div className="panel-heading" data-slot="chart-header">
@@ -77,6 +87,8 @@ export function ChartStage({ config, mode, onChangeMode, headerRight, timelineOv
             key={`${config.birthday}-${config.birthTime}-${config.birthdayType}-${config.gender}`}
             config={config}
             timelineOverlay={timelineOverlay}
+            selectedPalaceIndex={selectedPalaceIndex}
+            onSelectPalace={onSelectPalace}
           />
         </div>
       ) : (

@@ -547,6 +547,47 @@
   filter: drop-shadow(0 0 3px rgba(31, 27, 23, 0.06));
 }
 
+.sihua-arrow-label {
+  opacity: 0.9;
+  filter: drop-shadow(0 1px 1px rgba(31, 27, 23, 0.1));
+  transition:
+    opacity 160ms ease,
+    filter 160ms ease;
+}
+
+.sihua-arrow-label-bg {
+  stroke: none;
+}
+
+.sihua-arrow-label-text {
+  fill: #fff;
+  font-size: 1.45px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.sihua-arrow-label.type-禄 .sihua-arrow-label-bg {
+  fill: #3d8f48;
+}
+
+.sihua-arrow-label.type-权 .sihua-arrow-label-bg {
+  fill: #7d4bba;
+}
+
+.sihua-arrow-label.type-科 .sihua-arrow-label-bg {
+  fill: #3569c8;
+}
+
+.sihua-arrow-label.type-忌 .sihua-arrow-label-bg {
+  fill: #c44a4a;
+}
+
+.sihua-arrow-label.is-active {
+  opacity: 1;
+  filter: drop-shadow(0 1px 3px rgba(31, 27, 23, 0.16));
+}
+
 .sihua-hover-type {
   display: inline-flex;
   align-items: center;
@@ -594,6 +635,7 @@
     box-shadow 160ms ease,
     border-color 160ms ease,
     background-color 160ms ease;
+  cursor: pointer;
 }
 
 .sihua-timeline-tag {
@@ -623,6 +665,19 @@
   box-shadow:
     0 10px 24px rgba(63, 47, 31, 0.08),
     inset 0 0 0 1px rgba(95, 77, 53, 0.16);
+}
+
+.sihua-palace.is-selected {
+  border-color: rgba(38, 92, 79, 0.42);
+  background: linear-gradient(180deg, rgba(240, 249, 244, 0.95), rgba(255, 249, 240, 0.96));
+  box-shadow:
+    inset 0 0 0 1px rgba(38, 92, 79, 0.14),
+    0 14px 38px rgba(38, 92, 79, 0.12);
+}
+
+.sihua-palace:focus-visible {
+  outline: 2px solid rgba(38, 92, 79, 0.62);
+  outline-offset: 2px;
 }
 
 .sihua-palace[data-types~='禄'] {
@@ -1174,6 +1229,80 @@
 
 .skill-insight-block ul {
   margin: 10px 0 0;
+}
+
+.palace-detail-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.analysis-back-button {
+  justify-self: start;
+  border: 1px solid rgba(38, 92, 79, 0.16);
+  border-radius: 999px;
+  background: rgba(38, 92, 79, 0.08);
+  color: var(--tone-accent);
+  padding: 8px 12px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.palace-detail-panel h2 {
+  display: grid;
+  gap: 5px;
+}
+
+.palace-detail-panel h2 span {
+  color: var(--tone-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.palace-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.palace-detail-meta span {
+  border-radius: 999px;
+  background: rgba(38, 92, 79, 0.08);
+  color: var(--tone-muted);
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+.palace-detail-block ul {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.palace-detail-block li {
+  display: grid;
+  gap: 4px;
+  border-left: 3px solid rgba(38, 92, 79, 0.16);
+  padding-left: 10px;
+}
+
+.palace-detail-block li[data-weight='primary'] {
+  border-left-color: rgba(38, 92, 79, 0.68);
+}
+
+.palace-detail-block li[data-weight='validation'] {
+  border-left-color: rgba(191, 93, 57, 0.54);
+}
+
+.palace-detail-block li strong {
+  font-size: 12px;
+  color: var(--tone-ink);
+}
+
+.palace-detail-block li span {
+  color: var(--tone-muted);
+  line-height: 1.62;
 }
 
 .error-text {

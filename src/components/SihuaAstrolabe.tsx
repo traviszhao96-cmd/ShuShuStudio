@@ -5,6 +5,8 @@ import type { ChartConfig } from '../types'
 
 type SihuaAstrolabeProps = {
   config: ChartConfig
+  selectedPalaceIndex?: number | null
+  onSelectPalace?: (palaceIndex: number) => void
   timelineOverlay?: {
     displayMode: 'decade' | 'yearly'
     activeYear: number
@@ -84,10 +86,9 @@ type InwardArrow = {
   sourcePalaceIndex: number
   targetPalaceIndex: number
   type: MutagenType
-  x1: number
-  y1: number
-  x2: number
-  y2: number
+  d: string
+  labelX: number
+  labelY: number
 }
 
 type SourceMutagenGroup = {
@@ -112,6 +113,7 @@ const PALACE_EDGE_ANCHORS: Record<number, PalacePoint> = {
   10: { x: 62.5, y: 74.8 },
   11: { x: 37.5, y: 74.8 },
 }
+const SIHUA_NEXUS_POINT: PalacePoint = { x: 50, y: 50 }
 
 function findStarPalace(palaces: PalaceWithStars[], starName: string) {
   return palaces.find((palace) => {
@@ -157,48 +159,49 @@ function getSelfMutagenStarMap(palace: PalaceWithStars) {
   return byStar
 }
 
-function buildArrowEndpoints(from: PalacePoint, to: PalacePoint, offset = 0, trim = 1.2) {
+function moveToward(from: PalacePoint, to: PalacePoint, distanceToMove: number) {
   const dx = to.x - from.x
   const dy = to.y - from.y
   const distance = Math.hypot(dx, dy) || 1
   const ux = dx / distance
   const uy = dy / distance
-  const px = -uy
-  const py = ux
+
   return {
-    x1: from.x + ux * trim + px * offset,
-    y1: from.y + uy * trim + py * offset,
-    x2: to.x - ux * trim + px * offset,
-    y2: to.y - uy * trim + py * offset,
+    x: from.x + ux * distanceToMove,
+    y: from.y + uy * distanceToMove,
   }
 }
 
-function buildPairedArrowEndpoints(
+function formatPoint(point: PalacePoint) {
+  return `${point.x.toFixed(2)} ${point.y.toFixed(2)}`
+}
+
+function buildCenterlineArrowGeometry(
   sourceIndex: number,
   targetIndex: number,
-  offset = 0,
-  trim = 1.8,
+  sourceTrim = 1.8,
+  targetTrim = 1.8,
+  labelOffset = 0,
 ) {
-  const canonicalSourceIndex = Math.min(sourceIndex, targetIndex)
-  const canonicalTargetIndex = Math.max(sourceIndex, targetIndex)
-  const canonicalFrom = PALACE_EDGE_ANCHORS[canonicalSourceIndex] ?? { x: 50, y: 50 }
-  const canonicalTo = PALACE_EDGE_ANCHORS[canonicalTargetIndex] ?? { x: 50, y: 50 }
-  const effectiveOffset = sourceIndex === canonicalSourceIndex ? offset : -offset
-  const canonicalPoints = buildArrowEndpoints(canonicalFrom, canonicalTo, effectiveOffset, trim)
-
-  if (sourceIndex === canonicalSourceIndex) {
-    return canonicalPoints
-  }
+  const sourceAnchor = PALACE_EDGE_ANCHORS[sourceIndex] ?? SIHUA_NEXUS_POINT
+  const targetAnchor = PALACE_EDGE_ANCHORS[targetIndex] ?? SIHUA_NEXUS_POINT
+  const start = moveToward(sourceAnchor, SIHUA_NEXUS_POINT, sourceTrim)
+  const end = moveToward(targetAnchor, SIHUA_NEXUS_POINT, targetTrim)
+  const labelBase = moveToward(end, SIHUA_NEXUS_POINT, 7.2)
 
   return {
-    x1: canonicalPoints.x2,
-    y1: canonicalPoints.y2,
-    x2: canonicalPoints.x1,
-    y2: canonicalPoints.y1,
+    d: `M ${formatPoint(start)} L ${formatPoint(SIHUA_NEXUS_POINT)} L ${formatPoint(end)}`,
+    labelX: labelBase.x + labelOffset,
+    labelY: labelBase.y,
   }
 }
 
-export function SihuaAstrolabe({ config, timelineOverlay }: SihuaAstrolabeProps) {
+export function SihuaAstrolabe({
+  config,
+  selectedPalaceIndex = null,
+  onSelectPalace,
+  timelineOverlay,
+}: SihuaAstrolabeProps) {
   const { astrolabe } = useIztro({
     birthday: config.birthday,
     birthTime: config.birthTime,
@@ -309,15 +312,14 @@ export function SihuaAstrolabe({ config, timelineOverlay }: SihuaAstrolabeProps)
   const inwardArrows = useMemo<InwardArrow[]>(() => {
     return sourceMutagenGroups.flatMap((group) => {
       return group.arrows.map((arrow, index, collection) => {
-        const offsetSeed = index - (collection.length - 1) / 2
+        const labelOffset = (index - (collection.length - 1) / 2) * 3.9
         const pairKey = `${Math.min(group.sourcePalaceIndex, arrow.targetPalaceIndex)}-${Math.max(group.sourcePalaceIndex, arrow.targetPalaceIndex)}`
-        const pairDirectionBias = group.sourcePalaceIndex < arrow.targetPalaceIndex ? -1.15 : 1.15
-        const parallelOffset = offsetSeed * 0.95
-        const points = buildPairedArrowEndpoints(
+        const geometry = buildCenterlineArrowGeometry(
           group.sourcePalaceIndex,
           arrow.targetPalaceIndex,
-          pairDirectionBias + parallelOffset,
           1.8,
+          2.4,
+          labelOffset,
         )
 
         return {
@@ -325,7 +327,7 @@ export function SihuaAstrolabe({ config, timelineOverlay }: SihuaAstrolabeProps)
           sourcePalaceIndex: group.sourcePalaceIndex,
           targetPalaceIndex: arrow.targetPalaceIndex,
           type: arrow.type,
-          ...points,
+          ...geometry,
         }
       })
     })
@@ -337,21 +339,53 @@ export function SihuaAstrolabe({ config, timelineOverlay }: SihuaAstrolabeProps)
       {inwardArrows.length > 0 ? (
         <svg className="sihua-arrow-layer" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
           <defs>
-            <marker id="sihua-arrowhead-禄" markerWidth="3.2" markerHeight="3.2" refX="3" refY="1.6" orient="auto">
+            <marker
+              id="sihua-arrowhead-禄"
+              markerWidth="3.2"
+              markerHeight="3.2"
+              refX="0.18"
+              refY="1.6"
+              orient="auto"
+              viewBox="0 0 3.2 3.2"
+            >
               <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#3d8f48" />
             </marker>
-            <marker id="sihua-arrowhead-权" markerWidth="3.2" markerHeight="3.2" refX="3" refY="1.6" orient="auto">
+            <marker
+              id="sihua-arrowhead-权"
+              markerWidth="3.2"
+              markerHeight="3.2"
+              refX="0.18"
+              refY="1.6"
+              orient="auto"
+              viewBox="0 0 3.2 3.2"
+            >
               <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#7d4bba" />
             </marker>
-            <marker id="sihua-arrowhead-科" markerWidth="3.2" markerHeight="3.2" refX="3" refY="1.6" orient="auto">
+            <marker
+              id="sihua-arrowhead-科"
+              markerWidth="3.2"
+              markerHeight="3.2"
+              refX="0.18"
+              refY="1.6"
+              orient="auto"
+              viewBox="0 0 3.2 3.2"
+            >
               <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#3569c8" />
             </marker>
-            <marker id="sihua-arrowhead-忌" markerWidth="3.2" markerHeight="3.2" refX="3" refY="1.6" orient="auto">
+            <marker
+              id="sihua-arrowhead-忌"
+              markerWidth="3.2"
+              markerHeight="3.2"
+              refX="0.18"
+              refY="1.6"
+              orient="auto"
+              viewBox="0 0 3.2 3.2"
+            >
               <path d="M0,0 L3.2,1.6 L0,3.2 Z" fill="#c44a4a" />
             </marker>
           </defs>
           {inwardArrows.map((arrow) => (
-            <line
+            <path
               key={arrow.key}
               className={`sihua-inward-arrow type-${arrow.type} ${
                 hoveredPalaceIndex !== null &&
@@ -360,12 +394,27 @@ export function SihuaAstrolabe({ config, timelineOverlay }: SihuaAstrolabeProps)
                   ? 'is-active'
                   : ''
               }`}
-              x1={arrow.x1}
-              y1={arrow.y1}
-              x2={arrow.x2}
-              y2={arrow.y2}
+              d={arrow.d}
               markerEnd={`url(#sihua-arrowhead-${arrow.type})`}
             />
+          ))}
+          {inwardArrows.map((arrow) => (
+            <g
+              key={`${arrow.key}-label`}
+              className={`sihua-arrow-label type-${arrow.type} ${
+                hoveredPalaceIndex !== null &&
+                (hoveredPalaceIndex === arrow.sourcePalaceIndex ||
+                  hoveredPalaceIndex === arrow.targetPalaceIndex)
+                  ? 'is-active'
+                  : ''
+              }`}
+              transform={`translate(${arrow.labelX.toFixed(2)} ${arrow.labelY.toFixed(2)})`}
+            >
+              <rect className="sihua-arrow-label-bg" x="-1.8" y="-1.2" width="3.6" height="2.4" rx="0.5" />
+              <text className="sihua-arrow-label-text" x="0" y="0">
+                {arrow.type}
+              </text>
+            </g>
           ))}
         </svg>
       ) : null}
@@ -382,6 +431,8 @@ export function SihuaAstrolabe({ config, timelineOverlay }: SihuaAstrolabeProps)
           <section
             key={palace.earthlyBranch}
             className={`sihua-palace ${hoveredPalaceIndex === palace.index ? 'is-hovered' : ''} ${
+              selectedPalaceIndex === palace.index ? 'is-selected' : ''
+            } ${
               hoveredPalaceIndex !== null &&
               inwardArrows.some(
                 (arrow) =>
@@ -392,8 +443,17 @@ export function SihuaAstrolabe({ config, timelineOverlay }: SihuaAstrolabeProps)
             }`}
             data-types={activeTypes.join(' ')}
             style={{ gridArea: `g${palace.index}` }}
+            role="button"
+            tabIndex={0}
             onMouseEnter={() => setHoveredPalaceIndex(palace.index)}
             onMouseLeave={() => setHoveredPalaceIndex((current) => (current === palace.index ? null : current))}
+            onClick={() => onSelectPalace?.(palace.index)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onSelectPalace?.(palace.index)
+              }
+            }}
           >
             {timelineOverlay?.displayMode === 'decade' && decadeYearLabel ? (
               <div className="sihua-timeline-tag sihua-timeline-tag--year">{decadeYearLabel}</div>

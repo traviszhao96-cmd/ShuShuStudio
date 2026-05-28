@@ -173,6 +173,12 @@ function oppositePalaceName(name: string) {
   return index >= 0 ? PALACE_ORDER[(index + 6) % 12] : ''
 }
 
+function buildAstrolabe(config: ChartConfig) {
+  return config.birthdayType === 'solar'
+    ? astro.bySolar(config.birthday, config.birthTime, config.gender, true, 'zh-CN')
+    : astro.byLunar(config.birthday, config.birthTime, config.gender, false, true, 'zh-CN')
+}
+
 export function toTimeIndex(value: string) {
   const [rawHour = '0'] = value.split(':')
   const hour = Number(rawHour)
@@ -334,10 +340,7 @@ export function buildTimelineModel(config: ChartConfig, pivotYear = new Date().g
 
 export function buildSihuaRiskSummary(config: ChartConfig): SihuaRiskPalace[] {
   try {
-    const astrolabe =
-      config.birthdayType === 'solar'
-        ? astro.bySolar(config.birthday, config.birthTime, config.gender, true, 'zh-CN')
-        : astro.byLunar(config.birthday, config.birthTime, config.gender, false, true, 'zh-CN')
+    const astrolabe = buildAstrolabe(config)
 
     const riskMap = new Map<string, SihuaRiskPalace>()
     const allPalaces = astrolabe.palaces
@@ -427,10 +430,7 @@ export function buildSihuaRiskSummary(config: ChartConfig): SihuaRiskPalace[] {
 
 export function buildZiweiDoushuInsights(config: ChartConfig): ZiweiInsightPayload | null {
   try {
-    const astrolabe =
-      config.birthdayType === 'solar'
-        ? astro.bySolar(config.birthday, config.birthTime, config.gender, true, 'zh-CN')
-        : astro.byLunar(config.birthday, config.birthTime, config.gender, false, true, 'zh-CN')
+    const astrolabe = buildAstrolabe(config)
 
     const lifePalace = astrolabe.palaces.find((palace) => normalizePalaceName(palace.name) === '命宫')
     const spousePalace = astrolabe.palaces.find((palace) => normalizePalaceName(palace.name) === '夫妻')

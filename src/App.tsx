@@ -4,6 +4,9 @@ import { ChartStage } from './components/ChartStage'
 import { InsightSidebar } from './components/InsightSidebar'
 import { ReportPanel } from './components/ReportPanel'
 import { TimelineToolbar } from './components/TimelineToolbar'
+import { buildChartModel } from './analysis/chartModel'
+import { buildOverallAnalysis } from './analysis/overallAnalysis'
+import { buildPalaceResult } from './analysis/palaceAnalysis'
 import { caseGroups, caseRecords, defaultCase } from './data'
 import type { CaseGroupFilter } from './data'
 import type { CaseRecord, WorkspaceMode } from './types'
@@ -36,6 +39,7 @@ function App() {
   const [isCaseListEditing, setIsCaseListEditing] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
   const [mode, setMode] = useState<WorkspaceMode>('sanhe')
+  const [selectedPalaceIndex, setSelectedPalaceIndex] = useState<number | null>(null)
   const [activeDecadalIndex, setActiveDecadalIndex] = useState<number | null>(null)
   const [activeYear, setActiveYear] = useState<number | null>(null)
   const [timelineDisplayMode, setTimelineDisplayMode] = useState<'decade' | 'yearly'>('decade')
@@ -54,6 +58,12 @@ function App() {
   const activePreview = useMemo(() => buildCasePreview(activeCase), [activeCase])
   const sihuaRisks = useMemo(() => buildSihuaRiskSummary(activeCase), [activeCase])
   const ziweiInsights = useMemo(() => buildZiweiDoushuInsights(activeCase), [activeCase])
+  const chartModel = useMemo(() => buildChartModel(activeCase), [activeCase])
+  const overallAnalysis = useMemo(() => buildOverallAnalysis(chartModel), [chartModel])
+  const selectedPalaceResult = useMemo(
+    () => buildPalaceResult(chartModel, selectedPalaceIndex),
+    [chartModel, selectedPalaceIndex],
+  )
   const resolvedDecadalIndex =
     activeDecadalIndex ?? timelineModel?.defaultDecadalIndex ?? timelineModel?.decadalOptions[0]?.palaceIndex ?? 0
   const resolvedYear =
@@ -161,6 +171,11 @@ function App() {
     setTimelineDisplayMode('yearly')
   }
 
+  function handleChangeMode(nextMode: WorkspaceMode) {
+    setMode(nextMode)
+    setSelectedPalaceIndex(null)
+  }
+
   return (
     <div className="page-shell">
       <div className="ambient ambient-a" />
@@ -189,7 +204,9 @@ function App() {
           <ChartStage
             config={deferredCase}
             mode={mode}
-            onChangeMode={setMode}
+            onChangeMode={handleChangeMode}
+            selectedPalaceIndex={mode === 'sihua' ? selectedPalaceIndex : null}
+            onSelectPalace={setSelectedPalaceIndex}
             timelineOverlay={{
               displayMode: timelineDisplayMode,
               activeYear: resolvedYear,
@@ -210,7 +227,14 @@ function App() {
           ) : null}
         </div>
 
-        <InsightSidebar mode={mode} risks={sihuaRisks} insights={ziweiInsights} />
+        <InsightSidebar
+          mode={mode}
+          risks={sihuaRisks}
+          insights={ziweiInsights}
+          overallAnalysis={mode === 'sihua' ? overallAnalysis : null}
+          selectedPalace={mode === 'sihua' ? selectedPalaceResult : null}
+          onBackToOverview={() => setSelectedPalaceIndex(null)}
+        />
       </main>
 
       <ReportPanel mode={mode} activeCase={activeCase} />
