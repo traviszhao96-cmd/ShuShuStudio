@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Iztrolabe } from 'react-iztro'
 import type { ChartConfig, WorkspaceMode } from '../types'
+import { CircularAstrolabe } from './CircularAstrolabe'
 import { SihuaAstrolabe } from './SihuaAstrolabe'
 
 type TimelineOverlay = {
@@ -24,8 +25,16 @@ type ChartStageProps = {
 const modeItems: Array<{ value: WorkspaceMode; label: string }> = [
   { value: 'sanhe', label: '三合' },
   { value: 'sihua', label: '四化' },
+  { value: 'circle', label: '圆盘' },
   { value: 'bazi', label: '八字' },
 ]
+
+function getStageTitle(mode: WorkspaceMode) {
+  if (mode === 'sanhe') return '三合舞台'
+  if (mode === 'sihua') return '四化舞台'
+  if (mode === 'circle') return '圆形星盘'
+  return '八字舞台'
+}
 
 export function ChartStage({
   config,
@@ -41,7 +50,7 @@ export function ChartStage({
       <div className="panel-heading" data-slot="chart-header">
         <div className="chart-heading-main" data-slot="chart-header-left">
           <p className="section-kicker">Live Astrolabe</p>
-          <h2>{mode === 'sanhe' ? '三合舞台' : mode === 'sihua' ? '四化舞台' : '八字舞台'}</h2>
+          <h2>{getStageTitle(mode)}</h2>
         </div>
 
         <div className="chart-header-actions">
@@ -84,6 +93,22 @@ export function ChartStage({
             </p>
           </div>
           <SihuaAstrolabe
+            key={`${config.birthday}-${config.birthTime}-${config.birthdayType}-${config.gender}`}
+            config={config}
+            timelineOverlay={timelineOverlay}
+            selectedPalaceIndex={selectedPalaceIndex}
+            onSelectPalace={onSelectPalace}
+          />
+        </div>
+      ) : mode === 'circle' ? (
+        <div className="chart-frame chart-frame--circular" data-slot="chart-canvas">
+          <div className="chart-mode-note">
+            <p className="section-kicker">Circular Focus</p>
+            <p>
+              这是圆形星盘尝试版：十二宫沿圆周展开，点选宫位后会点亮三方四正；生年四化以星曜旁的脉冲点标记，自化以离心与向心线条标记。
+            </p>
+          </div>
+          <CircularAstrolabe
             key={`${config.birthday}-${config.birthTime}-${config.birthdayType}-${config.gender}`}
             config={config}
             timelineOverlay={timelineOverlay}

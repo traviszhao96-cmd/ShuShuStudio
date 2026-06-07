@@ -205,7 +205,7 @@ function App() {
             config={deferredCase}
             mode={mode}
             onChangeMode={handleChangeMode}
-            selectedPalaceIndex={mode === 'sihua' ? selectedPalaceIndex : null}
+            selectedPalaceIndex={mode === 'sihua' || mode === 'circle' ? selectedPalaceIndex : null}
             onSelectPalace={setSelectedPalaceIndex}
             timelineOverlay={{
               displayMode: timelineDisplayMode,
@@ -231,8 +231,8 @@ function App() {
           mode={mode}
           risks={sihuaRisks}
           insights={ziweiInsights}
-          overallAnalysis={mode === 'sihua' ? overallAnalysis : null}
-          selectedPalace={mode === 'sihua' ? selectedPalaceResult : null}
+          overallAnalysis={mode === 'sihua' || mode === 'circle' ? overallAnalysis : null}
+          selectedPalace={mode === 'sihua' || mode === 'circle' ? selectedPalaceResult : null}
           onBackToOverview={() => setSelectedPalaceIndex(null)}
         />
       </main>

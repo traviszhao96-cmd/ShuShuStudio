@@ -202,7 +202,7 @@ export function InsightSidebar({
   selectedPalace,
   onBackToOverview,
 }: InsightSidebarProps) {
-  if (mode === 'sihua' && selectedPalace) {
+  if ((mode === 'sihua' || mode === 'circle') && selectedPalace) {
     return (
       <aside className="insight-column" data-slot="insight-column">
         <PalaceDetailPanel palace={selectedPalace} onBackToOverview={onBackToOverview} />
@@ -210,7 +210,7 @@ export function InsightSidebar({
     )
   }
 
-  if (mode === 'sihua' && overallAnalysis) {
+  if ((mode === 'sihua' || mode === 'circle') && overallAnalysis) {
     return (
       <aside className="insight-column" data-slot="insight-column">
         <OverallPatternPanel overall={overallAnalysis} />
