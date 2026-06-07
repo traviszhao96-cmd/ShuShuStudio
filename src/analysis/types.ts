@@ -205,3 +205,14 @@ export type MutagenChainResult = {
   luSuiJi: LuSuiJiItem[]
   keSuiQuan?: KeSuiQuanItem[]
 }
+
+export type TopicName = '个性' | '家庭' | '学业' | '婚姻' | '交友' | '事业' | '财富' | '健康'
+
+export type TopicResult = {
+  topic: TopicName
+  headline: string
+  summary: string
+  focusPalaces: GongName[]
+  points: string[]
+  alerts: AlertItem[]
+}

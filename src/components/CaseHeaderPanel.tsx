@@ -1,8 +1,9 @@
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as Tabs from '@radix-ui/react-tabs'
+import { LoaderCircle, Pencil, Plus, RefreshCw, Save } from 'lucide-react'
 import { useState } from 'react'
 import type { CaseGroupFilter } from '../data'
-import type { CaseRecord } from '../types'
+import type { BaziPillars, CaseRecord } from '../types'
 import { toTimeIndex } from '../utils'
 
 type CasePreview = {
@@ -12,6 +13,10 @@ type CasePreview = {
   note: string
   solarLabel: string
   lunarLabel: string
+  solarHeaderLabel: string
+  lunarHeaderLabel: string
+  headerLabel: string
+  birthTimeText: string
   zodiac: string
   zodiacIcon: string
 }
@@ -21,6 +26,7 @@ type EditableField = 'name' | 'time' | 'group'
 type CaseHeaderPanelProps = {
   open: boolean
   activeCaseId: string
+  loadingCaseId?: string | null
   activeGroup: CaseGroupFilter
   groups: readonly CaseGroupFilter[]
   activeCase: CasePreview
@@ -39,6 +45,7 @@ type CaseHeaderPanelProps = {
 export function CaseHeaderPanel({
   open,
   activeCaseId,
+  loadingCaseId,
   activeGroup,
   groups,
   activeCase,
@@ -82,35 +89,41 @@ export function CaseHeaderPanel({
     return `${caseId}:${field}`
   }
 
+  function formatBazi(bazi?: BaziPillars | null) {
+    if (!bazi) return '八字未生成'
+    return [bazi.yearPillar, bazi.monthPillar, bazi.dayPillar, bazi.hourPillar ?? '时辰待定'].join(' ')
+  }
+
   return (
     <header className={`case-header-panel ${open ? 'is-open' : ''}`} data-slot="hero-panel">
       <div className="case-header-top">
         <div className="case-current-card" data-slot="hero-main">
-          <div className="case-current-inline">
-            <span className="case-inline-item case-inline-zodiac" aria-hidden="true">
-              {activeCase.zodiacIcon}
-            </span>
-            <span className="case-inline-item case-inline-name">{activeCase.name}</span>
-            <span className="case-inline-item">{activeCase.group}</span>
-            <span className="case-inline-item">阳历 {activeCase.solarLabel}</span>
-            <span className="case-inline-item">农历 {activeCase.lunarLabel}</span>
-            <span className="case-inline-item">{activeCase.zodiac}</span>
+          <div className="case-current-summary">
+            <div className="case-current-line">
+              <strong className="case-current-name" title={activeCase.name}>
+                <span className="case-current-zodiac" aria-hidden="true">
+                  {activeCase.zodiacIcon}
+                </span>
+                <span className="case-current-name-text">{activeCase.name}</span>
+              </strong>
+              <span className="case-current-date" title={activeCase.solarHeaderLabel}>
+                {activeCase.solarHeaderLabel}
+              </span>
+              <span className="case-current-date case-current-lunar" title={activeCase.lunarHeaderLabel}>
+                {activeCase.lunarHeaderLabel}
+              </span>
+            </div>
           </div>
-        </div>
-
-        <div className="case-toggle-slot" data-slot="hero-toggle">
-          <button type="button" className="browser-toggle-inline" onClick={onToggleOpen}>
-            <span className={`browser-toggle-icon ${open ? 'is-open' : ''}`} aria-hidden="true">
+          <button
+            type="button"
+            className="case-expand-button"
+            onClick={onToggleOpen}
+            aria-expanded={open}
+            aria-label={open ? '收起命例列表' : '展开命例列表'}
+          >
+            <span className={`case-inline-arrow ${open ? 'is-open' : ''}`} aria-hidden="true">
               ▾
             </span>
-            <span>{open ? '收起命例列表' : '展开命例列表'}</span>
-          </button>
-        </div>
-
-        <div className="case-action-box" data-slot="hero-side">
-          <button type="button" className="add-case-button" onClick={onAddCase}>
-            <span aria-hidden="true">＋</span>
-            <span>新增命例</span>
           </button>
         </div>
       </div>
@@ -130,24 +143,44 @@ export function CaseHeaderPanel({
               ))}
             </Tabs.List>
 
-            <button type="button" className={`case-edit-toggle ${isEditing ? 'is-active' : ''}`} onClick={onToggleEdit}>
-              {isEditing ? '完成' : '编辑'}
-            </button>
-
-            <button
-              type="button"
-              className={`case-save-button ${saveStatus === 'saved' ? 'is-saved' : ''} ${saveStatus === 'error' ? 'is-error' : ''}`}
-              onClick={onSaveCases}
-              disabled={saveStatus === 'saving'}
-            >
-              {saveStatus === 'saving'
-                ? '写回中...'
-                : saveStatus === 'saved'
-                  ? '已写回数据库'
-                  : saveStatus === 'error'
-                    ? '重试写回'
-                    : '写回数据库'}
-            </button>
+            <div className="case-browser-actions">
+              <button type="button" className="case-toolbar-icon-button" onClick={onAddCase} aria-label="新增命例" title="新增命例">
+                <Plus size={15} strokeWidth={2} />
+              </button>
+              <button
+                type="button"
+                className={`case-edit-toggle ${isEditing ? 'is-active' : ''} ${saveStatus === 'saved' ? 'is-saved' : ''} ${saveStatus === 'error' ? 'is-error' : ''}`}
+                onClick={() => {
+                  if (isEditing || saveStatus === 'error') {
+                    onSaveCases()
+                  }
+                  if (saveStatus !== 'error') {
+                    onToggleEdit()
+                  }
+                }}
+                disabled={saveStatus === 'saving'}
+                aria-label={
+                  saveStatus === 'saving'
+                    ? '保存中'
+                    : saveStatus === 'error'
+                      ? '重试保存'
+                      : isEditing
+                        ? '保存命例'
+                        : '编辑命例'
+                }
+                title={isEditing ? '保存命例' : '编辑命例'}
+              >
+                {saveStatus === 'saving' ? (
+                  <LoaderCircle className="case-toolbar-loading-icon" size={15} />
+                ) : saveStatus === 'error' ? (
+                  <RefreshCw size={15} />
+                ) : isEditing ? (
+                  <Save size={15} />
+                ) : (
+                  <Pencil size={15} />
+                )}
+              </button>
+            </div>
           </div>
 
           <Tabs.Content value={activeGroup} className="case-browser-content" forceMount>
@@ -160,11 +193,15 @@ export function CaseHeaderPanel({
                       className={`case-rail-item ${item.id === activeCaseId ? 'is-active' : ''} ${isEditing ? 'is-editing' : ''}`}
                     >
                       <button type="button" className="case-rail-select" onClick={() => onActivateCase(item.id)}>
-                        <strong>{item.name}</strong>
-                        <span>{item.lunarLabel}</span>
-                        <small>
-                          {item.zodiacIcon} {item.group}
-                        </small>
+                        <strong title={item.name}>{item.name}</strong>
+                        <span title={item.lunarLabel}>{item.lunarLabel}</span>
+                        <span className="case-rail-bazi" title={formatBazi(item.bazi)}>{formatBazi(item.bazi)}</span>
+                        <span className="case-rail-trailing">
+                          <small>{item.group}</small>
+                          {item.id === loadingCaseId ? (
+                            <span className="case-loading-spinner" role="status" aria-label="命例加载中" />
+                          ) : null}
+                        </span>
                       </button>
 
                       {isEditing ? (

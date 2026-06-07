@@ -1,12 +1,15 @@
 import { useDeferredValue, useMemo, useState } from 'react'
 import { CaseHeaderPanel } from './components/CaseHeaderPanel'
 import { ChartStage } from './components/ChartStage'
+import { AgentTalkBar } from './components/AgentTalkBar'
 import { InsightSidebar } from './components/InsightSidebar'
 import { ReportPanel } from './components/ReportPanel'
 import { TimelineToolbar } from './components/TimelineToolbar'
+import { buildAgentContextMarkdown } from './agent/contextMarkdown'
 import { buildChartModel } from './analysis/chartModel'
 import { buildOverallAnalysis } from './analysis/overallAnalysis'
 import { buildPalaceResult } from './analysis/palaceAnalysis'
+import { buildTopicAnalyses } from './analysis/topicAnalysis'
 import { caseGroups, caseRecords, defaultCase } from './data'
 import type { CaseGroupFilter } from './data'
 import type { CaseRecord, WorkspaceMode } from './types'
@@ -38,7 +41,7 @@ function App() {
   const [isBrowserOpen, setIsBrowserOpen] = useState(false)
   const [isCaseListEditing, setIsCaseListEditing] = useState(false)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-  const [mode, setMode] = useState<WorkspaceMode>('sanhe')
+  const [mode, setMode] = useState<WorkspaceMode>('analysis')
   const [selectedPalaceIndex, setSelectedPalaceIndex] = useState<number | null>(null)
   const [activeDecadalIndex, setActiveDecadalIndex] = useState<number | null>(null)
   const [activeYear, setActiveYear] = useState<number | null>(null)
@@ -46,7 +49,7 @@ function App() {
 
   const activeCase = casesState.find((item) => item.id === activeCaseId) ?? casesState[0] ?? defaultCase
   const deferredCase = useDeferredValue(activeCase)
-  const timelineModel = useMemo(() => buildTimelineModel(activeCase, 2026), [activeCase])
+  const timelineModel = useMemo(() => buildTimelineModel(deferredCase, 2026), [deferredCase])
 
   const visibleCases = useMemo(() => {
     const scoped =
@@ -56,10 +59,11 @@ function App() {
   }, [activeGroup, casesState])
 
   const activePreview = useMemo(() => buildCasePreview(activeCase), [activeCase])
-  const sihuaRisks = useMemo(() => buildSihuaRiskSummary(activeCase), [activeCase])
-  const ziweiInsights = useMemo(() => buildZiweiDoushuInsights(activeCase), [activeCase])
-  const chartModel = useMemo(() => buildChartModel(activeCase), [activeCase])
+  const sihuaRisks = useMemo(() => buildSihuaRiskSummary(deferredCase), [deferredCase])
+  const ziweiInsights = useMemo(() => buildZiweiDoushuInsights(deferredCase), [deferredCase])
+  const chartModel = useMemo(() => buildChartModel(deferredCase), [deferredCase])
   const overallAnalysis = useMemo(() => buildOverallAnalysis(chartModel), [chartModel])
+  const topicAnalyses = useMemo(() => buildTopicAnalyses(chartModel), [chartModel])
   const selectedPalaceResult = useMemo(
     () => buildPalaceResult(chartModel, selectedPalaceIndex),
     [chartModel, selectedPalaceIndex],
@@ -101,6 +105,36 @@ function App() {
     return labels
   }, [activeDecadal])
 
+  const agentContextMarkdown = useMemo(
+    () =>
+      buildAgentContextMarkdown({
+        activeCase: deferredCase,
+        mode,
+        chartModel,
+        overallAnalysis,
+        topicAnalyses,
+        selectedPalace: selectedPalaceResult,
+        activeDecadal,
+        activeTimelineYear,
+        timelineDisplayMode,
+        ziweiInsights,
+        sihuaRisks,
+      }),
+    [
+      deferredCase,
+      mode,
+      chartModel,
+      overallAnalysis,
+      topicAnalyses,
+      selectedPalaceResult,
+      activeDecadal,
+      activeTimelineYear,
+      timelineDisplayMode,
+      ziweiInsights,
+      sihuaRisks,
+    ],
+  )
+
   function handleSetGroup(group: CaseGroupFilter) {
     setActiveGroup(group)
 
@@ -110,8 +144,15 @@ function App() {
 
     const firstMatch = casesState.find((item) => item.group === group)
     if (firstMatch) {
-      setActiveCaseId(firstMatch.id)
+      handleActivateCase(firstMatch.id)
     }
+  }
+
+  function handleActivateCase(caseId: string) {
+    setActiveCaseId(caseId)
+    setSelectedPalaceIndex(null)
+    setActiveDecadalIndex(null)
+    setActiveYear(null)
   }
 
   function handleUpdateCase(caseId: string, patch: Partial<CaseRecord>) {
@@ -184,6 +225,7 @@ function App() {
       <CaseHeaderPanel
         open={isBrowserOpen}
         activeCaseId={activeCaseId}
+        loadingCaseId={activeCase.id !== deferredCase.id ? activeCase.id : null}
         activeGroup={activeGroup}
         groups={caseGroups}
         activeCase={activePreview}
@@ -191,7 +233,7 @@ function App() {
         isEditing={isCaseListEditing}
         saveStatus={saveStatus}
         onToggleOpen={() => setIsBrowserOpen((value) => !value)}
-        onActivateCase={setActiveCaseId}
+        onActivateCase={handleActivateCase}
         onSetGroup={handleSetGroup}
         onToggleEdit={() => setIsCaseListEditing((value) => !value)}
         onSaveCases={handleSaveCases}
@@ -205,8 +247,11 @@ function App() {
             config={deferredCase}
             mode={mode}
             onChangeMode={handleChangeMode}
-            selectedPalaceIndex={mode === 'sihua' ? selectedPalaceIndex : null}
+            onEnterCharts={() => handleChangeMode('sanhe')}
+            onBackToAnalysis={() => handleChangeMode('analysis')}
+            selectedPalaceIndex={mode === 'sihua' || mode === 'circle' ? selectedPalaceIndex : null}
             onSelectPalace={setSelectedPalaceIndex}
+            topicAnalyses={topicAnalyses}
             timelineOverlay={{
               displayMode: timelineDisplayMode,
               activeYear: resolvedYear,
@@ -215,7 +260,7 @@ function App() {
               yearlyPalaceLabelsByPalace,
             }}
           />
-          {timelineModel ? (
+          {timelineModel && mode !== 'analysis' ? (
             <TimelineToolbar
               decadalOptions={timelineModel.decadalOptions}
               activeDecadalIndex={resolvedDecadalIndex}
@@ -231,13 +276,26 @@ function App() {
           mode={mode}
           risks={sihuaRisks}
           insights={ziweiInsights}
-          overallAnalysis={mode === 'sihua' ? overallAnalysis : null}
-          selectedPalace={mode === 'sihua' ? selectedPalaceResult : null}
+          overallAnalysis={mode === 'sihua' || mode === 'circle' || mode === 'analysis' ? overallAnalysis : null}
+          selectedPalace={mode === 'sihua' || mode === 'circle' ? selectedPalaceResult : null}
           onBackToOverview={() => setSelectedPalaceIndex(null)}
         />
       </main>
 
-      <ReportPanel mode={mode} activeCase={activeCase} />
+      <ReportPanel mode={mode} activeCase={deferredCase} />
+      <AgentTalkBar
+        contextMarkdown={agentContextMarkdown}
+        activeCase={{
+          id: activeCase.id,
+          name: activeCase.name,
+          solarLabel: activePreview.solarLabel,
+          headerLabel: activePreview.headerLabel,
+          solarHeaderLabel: activePreview.solarHeaderLabel,
+          lunarHeaderLabel: activePreview.lunarHeaderLabel,
+          zodiacIcon: activePreview.zodiacIcon,
+        }}
+        onActivateCase={handleActivateCase}
+      />
     </div>
   )
 }

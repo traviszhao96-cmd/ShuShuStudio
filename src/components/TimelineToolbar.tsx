@@ -21,12 +21,7 @@ export function TimelineToolbar({
     decadalOptions.find((item) => item.palaceIndex === activeDecadalIndex) ?? decadalOptions[0]
 
   return (
-    <section className="timeline-toolbar" data-slot="timeline-toolbar">
-      <div className="timeline-summary">
-        <p className="section-kicker">Timeline Controls</p>
-        <h2>大运与流年</h2>
-      </div>
-
+    <section className="timeline-toolbar" data-slot="timeline-toolbar" aria-label="大限与流年选择">
       <div className="timeline-stack">
         <div className="timeline-row">
           <span className="timeline-row-label">大限</span>
@@ -37,6 +32,7 @@ export function TimelineToolbar({
                 type="button"
                 className={`timeline-chip ${activeDecadalIndex === item.palaceIndex ? 'is-active' : ''}`}
                 onClick={() => onSelectDecadal(item.palaceIndex)}
+                aria-label={`${item.startAge}至${item.endAge}岁 ${item.heavenlyStem}${item.earthlyBranch}限`}
               >
                 <strong>
                   {item.startAge}~{item.endAge}
@@ -62,6 +58,7 @@ export function TimelineToolbar({
                     displayMode === 'yearly' && activeYear === item.year ? 'is-active' : ''
                   }`}
                   onClick={() => onSelectYear(item.year)}
+                  aria-label={`${item.year}年 ${item.nominalAge}岁`}
                 >
                   <strong>{item.year}</strong>
                   <span>{item.nominalAge}岁</span>

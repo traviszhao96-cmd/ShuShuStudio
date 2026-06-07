@@ -12,6 +12,14 @@ dist
 dist-ssr
 *.local
 db/cases.sqlite
+artifacts/
+
+# Local secrets
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
 
 # Editor directories and files
 .vscode/*

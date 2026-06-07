@@ -192,6 +192,37 @@ export function toTimeIndex(value: string) {
   return Math.floor((hour + 1) / 2)
 }
 
+export function formatCaseHeaderLabel(
+  name: string,
+  birthday: string,
+  birthTimeText: string,
+  lunarLabel: string,
+) {
+  const { solarHeaderLabel, lunarHeaderLabel } = formatCaseHeaderDates(
+    birthday,
+    birthTimeText,
+    lunarLabel,
+  )
+
+  return `${name} ${solarHeaderLabel} ${lunarHeaderLabel}`
+}
+
+export function formatCaseHeaderDates(
+  birthday: string,
+  birthTimeText: string,
+  lunarLabel: string,
+) {
+  const [year = '', month = '', day = ''] = birthday.split('-')
+  const solarHeaderLabel = `${year}年${Number(month)}月${Number(day)}日${birthTimeText}`
+  const timeBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥', '子']
+  const timeBranch = timeBranches[toTimeIndex(birthTimeText)] ?? '子'
+
+  return {
+    solarHeaderLabel,
+    lunarHeaderLabel: `${lunarLabel}${timeBranch}时`,
+  }
+}
+
 export function buildChartSummary(config: ChartConfig): ChartSummary | null {
   try {
     const astrolabe =
@@ -594,11 +625,25 @@ const zodiacIcons: Record<string, string> = {
 
 export function buildCasePreview(caseRecord: CaseRecord) {
   const chart = buildChartSummary(caseRecord)
+  const lunarLabel = chart?.lunarDate ?? '未生成'
+  const { solarHeaderLabel, lunarHeaderLabel } = formatCaseHeaderDates(
+    caseRecord.birthday,
+    caseRecord.birthTimeText,
+    lunarLabel,
+  )
 
   return {
     ...caseRecord,
     solarLabel: `${caseRecord.birthday} ${caseRecord.birthTimeText}`,
-    lunarLabel: chart?.lunarDate ?? '未生成',
+    lunarLabel,
+    solarHeaderLabel,
+    lunarHeaderLabel,
+    headerLabel: formatCaseHeaderLabel(
+      caseRecord.name,
+      caseRecord.birthday,
+      caseRecord.birthTimeText,
+      lunarLabel,
+    ),
     zodiac: chart?.zodiac ?? '',
     zodiacIcon: zodiacIcons[chart?.zodiac ?? ''] ?? '✨',
   }

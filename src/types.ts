@@ -43,7 +43,7 @@ export type ChartSummary = {
   }>
 }
 
-export type WorkspaceMode = 'sanhe' | 'sihua' | 'bazi'
+export type WorkspaceMode = 'analysis' | 'sanhe' | 'sihua' | 'circle' | 'bazi'
 
 export type TimelineYearOption = {
   year: number

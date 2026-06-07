@@ -5,6 +5,20 @@ const reportTemplates: Record<
   WorkspaceMode,
   Array<{ title: string; body: string }>
 > = {
+  analysis: [
+    {
+      title: '1. 专题总览',
+      body: '这里承接个性、家庭、学业、婚姻、交友、事业、财富、健康八个专题的浓缩报告。',
+    },
+    {
+      title: '2. 规则来源',
+      body: '专题报告优先读取分析桥接层中的 ChartModel、OverallResult、PalaceResult 与飞化链。',
+    },
+    {
+      title: '3. 后续扩展',
+      body: '后续可逐步接入 OpenClaw 继续整理的宫位知识、格局评分、命签纸田和应期规则。',
+    },
+  ],
   sanhe: [
     {
       title: '1. 三合主轴',
@@ -31,6 +45,20 @@ const reportTemplates: Record<
     {
       title: '3. 应期与验证',
       body: '这里放四化在大限流年上的引动，以及待校验事件。',
+    },
+  ],
+  circle: [
+    {
+      title: '1. 圆盘总览',
+      body: '这里放十二宫圆形结构中的整体关系，突出命宫、身宫、来因宫与三方四正。',
+    },
+    {
+      title: '2. 宫位焦点',
+      body: '这里放点选宫位后的主题解释，并承接对宫和三方带来的补充判断。',
+    },
+    {
+      title: '3. 四化路径',
+      body: '这里放圆盘中的生年四化、自化、向心线与后续可扩展的飞化路径。',
     },
   ],
   bazi: [

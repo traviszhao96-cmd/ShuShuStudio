@@ -23,6 +23,7 @@
 
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -62,6 +63,20 @@ button,
 input,
 select {
   font: inherit;
+}
+
+:where(button, a, [role='button']) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+:where(button, a, [role='button']):focus {
+  outline: none;
+}
+
+:where(button, a, [role='button']):focus-visible {
+  outline: 2px solid rgba(38, 92, 79, 0.58);
+  outline-offset: 2px;
 }
 
 #root {

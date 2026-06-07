@@ -172,6 +172,19 @@ function moveToward(from: PalacePoint, to: PalacePoint, distanceToMove: number) 
   }
 }
 
+function rotateAroundCenter(point: PalacePoint, angleDegrees: number) {
+  const angle = (angleDegrees * Math.PI) / 180
+  const dx = point.x - SIHUA_NEXUS_POINT.x
+  const dy = point.y - SIHUA_NEXUS_POINT.y
+  const cos = Math.cos(angle)
+  const sin = Math.sin(angle)
+
+  return {
+    x: SIHUA_NEXUS_POINT.x + dx * cos - dy * sin,
+    y: SIHUA_NEXUS_POINT.y + dx * sin + dy * cos,
+  }
+}
+
 function formatPoint(point: PalacePoint) {
   return `${point.x.toFixed(2)} ${point.y.toFixed(2)}`
 }
@@ -182,12 +195,13 @@ function buildCenterlineArrowGeometry(
   sourceTrim = 1.8,
   targetTrim = 1.8,
   labelOffset = 0,
+  laneAngle = 0,
 ) {
-  const sourceAnchor = PALACE_EDGE_ANCHORS[sourceIndex] ?? SIHUA_NEXUS_POINT
-  const targetAnchor = PALACE_EDGE_ANCHORS[targetIndex] ?? SIHUA_NEXUS_POINT
+  const sourceAnchor = rotateAroundCenter(PALACE_EDGE_ANCHORS[sourceIndex] ?? SIHUA_NEXUS_POINT, laneAngle)
+  const targetAnchor = rotateAroundCenter(PALACE_EDGE_ANCHORS[targetIndex] ?? SIHUA_NEXUS_POINT, laneAngle)
   const start = moveToward(sourceAnchor, SIHUA_NEXUS_POINT, sourceTrim)
   const end = moveToward(targetAnchor, SIHUA_NEXUS_POINT, targetTrim)
-  const labelBase = moveToward(end, SIHUA_NEXUS_POINT, 7.2)
+  const labelBase = moveToward(end, SIHUA_NEXUS_POINT, 5.6)
 
   return {
     d: `M ${formatPoint(start)} L ${formatPoint(SIHUA_NEXUS_POINT)} L ${formatPoint(end)}`,
@@ -310,26 +324,50 @@ export function SihuaAstrolabe({
   })()
 
   const inwardArrows = useMemo<InwardArrow[]>(() => {
-    return sourceMutagenGroups.flatMap((group) => {
-      return group.arrows.map((arrow, index, collection) => {
-        const labelOffset = (index - (collection.length - 1) / 2) * 3.9
-        const pairKey = `${Math.min(group.sourcePalaceIndex, arrow.targetPalaceIndex)}-${Math.max(group.sourcePalaceIndex, arrow.targetPalaceIndex)}`
-        const geometry = buildCenterlineArrowGeometry(
+    const arrowEntries = sourceMutagenGroups.flatMap((group) =>
+      group.arrows.map((arrow, index, collection) => {
+        const pairKey = `${Math.min(group.sourcePalaceIndex, arrow.targetPalaceIndex)}-${Math.max(
           group.sourcePalaceIndex,
           arrow.targetPalaceIndex,
-          1.8,
-          2.4,
-          labelOffset,
-        )
+        )}`
 
         return {
-          key: `${pairKey}-${group.sourcePalaceIndex}-${arrow.targetPalaceIndex}-${arrow.type}-${index}`,
-          sourcePalaceIndex: group.sourcePalaceIndex,
-          targetPalaceIndex: arrow.targetPalaceIndex,
-          type: arrow.type,
-          ...geometry,
+          arrow,
+          group,
+          index,
+          collectionLength: collection.length,
+          pairKey,
         }
-      })
+      }),
+    )
+    const laneGroups = arrowEntries.reduce((acc, entry) => {
+      const current = acc.get(entry.pairKey) ?? []
+      current.push(entry)
+      acc.set(entry.pairKey, current)
+      return acc
+    }, new Map<string, typeof arrowEntries>())
+
+    return arrowEntries.map((entry) => {
+      const laneCollection = laneGroups.get(entry.pairKey) ?? []
+      const laneIndex = laneCollection.indexOf(entry)
+      const laneAngle = (laneIndex - (laneCollection.length - 1) / 2) * 3.2
+      const labelOffset = (entry.index - (entry.collectionLength - 1) / 2) * 3.9
+      const geometry = buildCenterlineArrowGeometry(
+        entry.group.sourcePalaceIndex,
+        entry.arrow.targetPalaceIndex,
+        1.8,
+        2.4,
+        labelOffset,
+        laneAngle,
+      )
+
+      return {
+        key: `${entry.pairKey}-${entry.group.sourcePalaceIndex}-${entry.arrow.targetPalaceIndex}-${entry.arrow.type}-${entry.index}`,
+        sourcePalaceIndex: entry.group.sourcePalaceIndex,
+        targetPalaceIndex: entry.arrow.targetPalaceIndex,
+        type: entry.arrow.type,
+        ...geometry,
+      }
     })
   }, [sourceMutagenGroups])
 
