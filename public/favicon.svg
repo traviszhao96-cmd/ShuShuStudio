@@ -6,9 +6,4 @@
     <ellipse cx="256" cy="256" rx="156" ry="64" transform="rotate(-60 256 256)"/>
   </g>
   <circle cx="256" cy="256" r="34" fill="#B16039"/>
-  <g fill="#265C4F">
-    <circle cx="256" cy="100" r="15"/>
-    <circle cx="121" cy="334" r="15"/>
-    <circle cx="391" cy="334" r="15"/>
-  </g>
 </svg>
