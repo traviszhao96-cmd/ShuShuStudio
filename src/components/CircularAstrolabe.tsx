@@ -13,6 +13,7 @@ type TimelineOverlay = {
 
 type CircularAstrolabeProps = {
   config: ChartConfig
+  userName: string
   selectedPalaceIndex?: number | null
   onSelectPalace?: (palaceIndex: number) => void
   timelineOverlay?: TimelineOverlay
@@ -83,7 +84,9 @@ function describeSector(startAngle: number, endAngle: number) {
 }
 
 function getPalaceAngle(index: number) {
-  return index * 30
+  // iztro palace indexes begin at 寅. Rotate the wheel so 子 is at the bottom
+  // and 午 is at the top, matching the traditional Zi Wei chart orientation.
+  return (index * 30 + 240) % 360
 }
 
 function getDisplayStars(palace: PalaceWithStars) {
@@ -137,6 +140,7 @@ function buildCentripetalSelfLine(sourceIndex: number, targetIndex: number, angl
 
 export function CircularAstrolabe({
   config,
+  userName,
   selectedPalaceIndex = null,
   onSelectPalace,
   timelineOverlay,
@@ -241,6 +245,12 @@ export function CircularAstrolabe({
 
   return (
     <div className="circular-board" data-slot="circular-astrolabe">
+      <div className="circular-profile" aria-label="命例基本信息">
+        <strong>{userName}</strong>
+        <span>{astrolabe?.gender === '男' ? '男' : astrolabe?.gender === '女' ? '女' : '性别未定'}</span>
+        <small>{astrolabe ? `${astrolabe.lunarDate}${astrolabe.time}` : '农历时间生成中'}</small>
+      </div>
+
       <svg className="circular-ring-layer" viewBox="0 0 100 100" role="img" aria-label="圆形紫微命盘">
         <defs>
           <radialGradient id="circular-core-glow" cx="50%" cy="48%" r="56%">
@@ -390,14 +400,6 @@ export function CircularAstrolabe({
 
         <path className="circular-zodiac-guide" d={describeArc(43.8, -8, 352)} />
       </svg>
-
-      <div className="circular-center-panel">
-        <span>圆盘视图</span>
-        <strong>{astrolabe?.gender === '男' ? '男命' : astrolabe?.gender === '女' ? '女命' : '命盘'}</strong>
-        <small>
-          {config.birthday} · {config.birthTimeText}
-        </small>
-      </div>
     </div>
   )
 }

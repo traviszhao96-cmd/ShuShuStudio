@@ -241,10 +241,18 @@ function App() {
         onAddCase={() => {}}
       />
 
-      <main className="workspace" data-slot="workspace">
+      <main
+        className={`workspace ${
+          mode === 'circle' || mode === 'analysis' || (mode === 'sihua' && !selectedPalaceResult)
+            ? 'workspace--single'
+            : ''
+        }`}
+        data-slot="workspace"
+      >
         <div className="workspace-main-column">
           <ChartStage
             config={deferredCase}
+            caseName={deferredCase.name}
             mode={mode}
             onChangeMode={handleChangeMode}
             onEnterCharts={() => handleChangeMode('sanhe')}
@@ -272,17 +280,19 @@ function App() {
           ) : null}
         </div>
 
-        <InsightSidebar
-          mode={mode}
-          risks={sihuaRisks}
-          insights={ziweiInsights}
-          overallAnalysis={mode === 'sihua' || mode === 'circle' || mode === 'analysis' ? overallAnalysis : null}
-          selectedPalace={mode === 'sihua' || mode === 'circle' ? selectedPalaceResult : null}
-          onBackToOverview={() => setSelectedPalaceIndex(null)}
-        />
+        {mode !== 'circle' && mode !== 'analysis' && (mode !== 'sihua' || selectedPalaceResult) ? (
+          <InsightSidebar
+            mode={mode}
+            risks={sihuaRisks}
+            insights={ziweiInsights}
+            overallAnalysis={mode === 'sihua' ? overallAnalysis : null}
+            selectedPalace={mode === 'sihua' ? selectedPalaceResult : null}
+            onBackToOverview={() => setSelectedPalaceIndex(null)}
+          />
+        ) : null}
       </main>
 
-      <ReportPanel mode={mode} activeCase={deferredCase} />
+      <ReportPanel chartModel={chartModel} overallAnalysis={overallAnalysis} />
       <AgentTalkBar
         contextMarkdown={agentContextMarkdown}
         activeCase={{

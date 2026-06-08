@@ -17,6 +17,7 @@ type TimelineOverlay = {
 
 type ChartStageProps = {
   config: ChartConfig
+  caseName: string
   mode: WorkspaceMode
   onChangeMode: (mode: WorkspaceMode) => void
   onEnterCharts: () => void
@@ -37,6 +38,7 @@ const modeItems: Array<{ value: Exclude<WorkspaceMode, 'analysis'>; label: strin
 
 export function ChartStage({
   config,
+  caseName,
   mode,
   onChangeMode,
   onEnterCharts,
@@ -141,6 +143,7 @@ export function ChartStage({
           <CircularAstrolabe
             key={`${config.birthday}-${config.birthTime}-${config.birthdayType}-${config.gender}`}
             config={config}
+            userName={caseName}
             timelineOverlay={timelineOverlay}
             selectedPalaceIndex={selectedPalaceIndex}
             onSelectPalace={onSelectPalace}

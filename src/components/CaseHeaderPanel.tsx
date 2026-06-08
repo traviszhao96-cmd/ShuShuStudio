@@ -1,7 +1,7 @@
 import * as ScrollArea from '@radix-ui/react-scroll-area'
 import * as Tabs from '@radix-ui/react-tabs'
-import { LoaderCircle, Pencil, Plus, RefreshCw, Save } from 'lucide-react'
-import { useState } from 'react'
+import { ChevronUp, LoaderCircle, Pencil, Plus, RefreshCw, Save } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import type { CaseGroupFilter } from '../data'
 import type { BaziPillars, CaseRecord } from '../types'
 import { toTimeIndex } from '../utils'
@@ -61,6 +61,20 @@ export function CaseHeaderPanel({
   onAddCase,
 }: CaseHeaderPanelProps) {
   const [editingKey, setEditingKey] = useState<string | null>(null)
+  const panelRef = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!panelRef.current?.contains(event.target as Node)) {
+        onToggleOpen()
+      }
+    }
+
+    document.addEventListener('pointerdown', handlePointerDown)
+    return () => document.removeEventListener('pointerdown', handlePointerDown)
+  }, [open, onToggleOpen])
 
   function handleUpdateField(
     caseId: string,
@@ -95,7 +109,7 @@ export function CaseHeaderPanel({
   }
 
   return (
-    <header className={`case-header-panel ${open ? 'is-open' : ''}`} data-slot="hero-panel">
+    <header ref={panelRef} className={`case-header-panel ${open ? 'is-open' : ''}`} data-slot="hero-panel">
       <div className="case-header-top">
         <div className="case-current-card" data-slot="hero-main">
           <div className="case-current-summary">
@@ -289,6 +303,11 @@ export function CaseHeaderPanel({
               </ScrollArea.Scrollbar>
             </ScrollArea.Root>
           </Tabs.Content>
+
+          <button type="button" className="case-collapse-strip" onClick={onToggleOpen}>
+            <ChevronUp size={14} strokeWidth={2} aria-hidden="true" />
+            <span>收起</span>
+          </button>
         </Tabs.Root>
       </div>
     </header>
