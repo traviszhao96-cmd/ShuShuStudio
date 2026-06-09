@@ -188,6 +188,8 @@
 
 .circular-wedge-branch,
 .circular-wedge-time {
+  text-anchor: middle;
+  dominant-baseline: middle;
   fill: rgba(111, 98, 86, 0.86);
   font-size: 1.9px;
   font-weight: 600;
@@ -195,6 +197,8 @@
 }
 
 .circular-wedge-name {
+  text-anchor: middle;
+  dominant-baseline: middle;
   fill: var(--tone-ink);
   font-family: 'Noto Serif SC', serif;
   font-size: 3.15px;

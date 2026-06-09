@@ -41,6 +41,8 @@ const CENTER = 50
 const OUTER_RADIUS = 47
 const INNER_RADIUS = 23
 const LABEL_RADIUS = 35.8
+const NAME_RADIUS = 42
+const BRANCH_RADIUS = 29
 const SELF_LINE_INNER_RADIUS = 24.8
 const SELF_LINE_OUTER_RADIUS = 45.7
 const MUTAGEN_ORDER = ['禄', '权', '科', '忌'] as const
@@ -275,9 +277,12 @@ export function CircularAstrolabe({
         {palaces.map((palace) => {
           const startAngle = getPalaceAngle(palace.index) - 15
           const endAngle = getPalaceAngle(palace.index) + 15
-          const labelPoint = polarToCartesian(LABEL_RADIUS, getPalaceAngle(palace.index))
+          const angle = getPalaceAngle(palace.index)
+          const namePoint = polarToCartesian(NAME_RADIUS, angle)
+          const labelPoint = polarToCartesian(LABEL_RADIUS, angle)
+          const branchPoint = polarToCartesian(BRANCH_RADIUS, angle)
           const displayedStars = getDisplayStars(palace)
-          const starY = labelPoint.y + 4
+          const starY = labelPoint.y
           const isFocused = palace.index === focusPalaceIndex
           const isSelected = palace.index === selectedPalaceIndex
           const isRelated = aspectIndices.includes(palace.index)
@@ -307,22 +312,20 @@ export function CircularAstrolabe({
               }}
             >
               <path className="circular-sector" d={describeSector(startAngle, endAngle)} />
-              <text className="circular-wedge-label" x={labelPoint.x} y={labelPoint.y}>
-                <tspan className="circular-wedge-branch" x={labelPoint.x} dy="-5.2">
-                  {palace.heavenlyStem}
-                  {palace.earthlyBranch}
-                </tspan>
-                <tspan className="circular-wedge-name" x={labelPoint.x} dy="4.7">
-                  {palace.name}
-                  {palace.isBodyPalace ? ' 身' : ''}
-                  {palace.isOriginalPalace ? ' 因' : ''}
-                </tspan>
-                {timelineLabel || decadalPalaceLabel ? (
-                  <tspan className="circular-wedge-time" x={labelPoint.x} dy="8.6">
-                    {timelineLabel ?? decadalPalaceLabel}
-                  </tspan>
-                ) : null}
+              <text className="circular-wedge-name" x={namePoint.x} y={namePoint.y}>
+                {palace.name}
+                {palace.isBodyPalace ? ' 身' : ''}
+                {palace.isOriginalPalace ? ' 因' : ''}
               </text>
+              <text className="circular-wedge-branch" x={branchPoint.x} y={branchPoint.y}>
+                {palace.heavenlyStem}
+                {palace.earthlyBranch}
+              </text>
+              {timelineLabel || decadalPalaceLabel ? (
+                <text className="circular-wedge-time" x={branchPoint.x} y={branchPoint.y + 3.8}>
+                  {timelineLabel ?? decadalPalaceLabel}
+                </text>
+              ) : null}
               {displayedStars.map((star, starIndex) => {
                 const starX = labelPoint.x + (starIndex - (displayedStars.length - 1) / 2) * 5.2
                 const pulseX = starX + Math.min(2.8, star.name.length * 1.05)
