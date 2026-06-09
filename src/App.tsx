@@ -252,7 +252,6 @@ function App() {
         <div className="workspace-main-column">
           <ChartStage
             config={deferredCase}
-            caseName={deferredCase.name}
             mode={mode}
             onChangeMode={handleChangeMode}
             onEnterCharts={() => handleChangeMode('sanhe')}

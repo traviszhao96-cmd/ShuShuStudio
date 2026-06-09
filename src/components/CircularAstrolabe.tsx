@@ -13,7 +13,6 @@ type TimelineOverlay = {
 
 type CircularAstrolabeProps = {
   config: ChartConfig
-  userName: string
   selectedPalaceIndex?: number | null
   onSelectPalace?: (palaceIndex: number) => void
   timelineOverlay?: TimelineOverlay
@@ -140,7 +139,6 @@ function buildCentripetalSelfLine(sourceIndex: number, targetIndex: number, angl
 
 export function CircularAstrolabe({
   config,
-  userName,
   selectedPalaceIndex = null,
   onSelectPalace,
   timelineOverlay,
@@ -245,13 +243,7 @@ export function CircularAstrolabe({
 
   return (
     <div className="circular-board" data-slot="circular-astrolabe">
-      <div className="circular-profile" aria-label="命例基本信息">
-        <strong>{userName}</strong>
-        <span>{astrolabe?.gender === '男' ? '男' : astrolabe?.gender === '女' ? '女' : '性别未定'}</span>
-        <small>{astrolabe ? `${astrolabe.lunarDate}${astrolabe.time}` : '农历时间生成中'}</small>
-      </div>
-
-      <svg className="circular-ring-layer" viewBox="0 0 100 100" role="img" aria-label="圆形紫微命盘">
+<svg className="circular-ring-layer" viewBox="0 0 100 100" role="img" aria-label="圆形紫微命盘">
         <defs>
           <radialGradient id="circular-core-glow" cx="50%" cy="48%" r="56%">
             <stop offset="0%" stopColor="#fffaf2" />

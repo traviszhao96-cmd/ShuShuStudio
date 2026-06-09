@@ -218,48 +218,6 @@
   fill: rgba(38, 92, 79, 0.98);
 }
 
-.circular-profile {
-  position: absolute;
-  top: 34%;
-  left: 34%;
-  z-index: 3;
-  max-width: 25%;
-  display: flex;
-  align-items: baseline;
-  flex-wrap: wrap;
-  gap: 2px 6px;
-  padding: 4px 5px;
-  border-radius: 7px;
-  background: rgba(255, 250, 242, 0.64);
-  text-align: left;
-  color: var(--tone-ink);
-  pointer-events: none;
-}
-
-.circular-profile strong {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-family: 'Noto Serif SC', serif;
-  font-size: clamp(12px, 1.6vw, 18px);
-}
-
-.circular-profile span {
-  flex: 0 0 auto;
-  font-size: 10px;
-  color: var(--tone-accent);
-}
-
-.circular-profile small {
-  flex-basis: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--tone-muted);
-  font-size: 9px;
-  line-height: 1.2;
-}
 
 @media (max-width: 720px) {
   .chart-frame--circular {
@@ -287,25 +245,7 @@
     display: none;
   }
 
-  .circular-profile {
-    top: 33%;
-    left: 33%;
-    max-width: 28%;
-    gap: 1px 4px;
-    padding: 3px 4px;
-  }
 
-  .circular-profile strong {
-    font-size: 9px;
-  }
-
-  .circular-profile span {
-    font-size: 7px;
-  }
-
-  .circular-profile small {
-    font-size: 6px;
-  }
 }
 
 .ambient {
