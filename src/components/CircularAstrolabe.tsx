@@ -14,7 +14,7 @@ type TimelineOverlay = {
 type CircularAstrolabeProps = {
   config: ChartConfig
   selectedPalaceIndex?: number | null
-  onSelectPalace?: (palaceIndex: number) => void
+  onSelectPalace?: (palaceIndex: number | null) => void
   timelineOverlay?: TimelineOverlay
 }
 
@@ -39,12 +39,14 @@ type PalaceWithStars = {
 
 const CENTER = 50
 const OUTER_RADIUS = 47
-const INNER_RADIUS = 23
-const LABEL_RADIUS = 35.8
-const NAME_RADIUS = 42
-const BRANCH_RADIUS = 29
-const SELF_LINE_INNER_RADIUS = 24.8
-const SELF_LINE_OUTER_RADIUS = 45.7
+const INNER_RADIUS = 20
+const BRANCH_RADIUS = 24
+const DECADE_RADIUS = 28
+const LABEL_RADIUS = 32
+const YEARLY_RADIUS = 36
+const STAR_OUTER_RADIUS = 42.5
+const SELF_LINE_INNER_RADIUS = 20
+const CENTER_HUB = 3.5
 const MUTAGEN_ORDER = ['禄', '权', '科', '忌'] as const
 
 type MutagenType = (typeof MUTAGEN_ORDER)[number]
@@ -84,6 +86,12 @@ function describeSector(startAngle: number, endAngle: number) {
   ].join(' ')
 }
 
+function buildArcPath(radius: number, centerAngle: number, spread: number) {
+  const s = polarToCartesian(radius, centerAngle - spread)
+  const e = polarToCartesian(radius, centerAngle + spread)
+  return `M ${s.x.toFixed(2)} ${s.y.toFixed(2)} A ${radius} ${radius} 0 0 1 ${e.x.toFixed(2)} ${e.y.toFixed(2)}`
+}
+
 function getPalaceAngle(index: number) {
   // iztro palace indexes begin at 寅. Rotate the wheel so 子 is at the bottom
   // and 午 is at the top, matching the traditional Zi Wei chart orientation.
@@ -91,7 +99,7 @@ function getPalaceAngle(index: number) {
 }
 
 function getDisplayStars(palace: PalaceWithStars) {
-  const stars = [...palace.majorStars, ...palace.minorStars.filter((star) => star.mutagen)].slice(0, 3)
+  const stars = [...palace.majorStars, ...palace.minorStars].slice(0, 4)
 
   return stars.length > 0 ? stars : [{ name: '无主星' }]
 }
@@ -123,20 +131,14 @@ function getSelfMutagenStars(palace: PalaceWithStars) {
   }).filter(Boolean) as Array<{ type: MutagenType; star: string }>
 }
 
-function buildCentrifugalSelfLine(palaceIndex: number, angleOffset: number) {
-  const angle = getPalaceAngle(palaceIndex) + angleOffset
-  const start = polarToCartesian(LABEL_RADIUS + 3.8, angle)
-  const end = polarToCartesian(SELF_LINE_OUTER_RADIUS, angle)
-
-  return `M ${start.x.toFixed(2)} ${start.y.toFixed(2)} L ${end.x.toFixed(2)} ${end.y.toFixed(2)}`
-}
-
 function buildCentripetalSelfLine(sourceIndex: number, targetIndex: number, angleOffset: number, radiusOffset: number) {
-  const radius = SELF_LINE_INNER_RADIUS + radiusOffset * 0.45
+  const radius = SELF_LINE_INNER_RADIUS - radiusOffset * 0.45
   const source = polarToCartesian(radius, getPalaceAngle(sourceIndex) + angleOffset)
   const target = polarToCartesian(radius, getPalaceAngle(targetIndex) + angleOffset)
+  const hubIn = polarToCartesian(CENTER_HUB, getPalaceAngle(sourceIndex) + angleOffset)
+  const hubOut = polarToCartesian(CENTER_HUB, getPalaceAngle(targetIndex) + angleOffset)
 
-  return `M ${source.x.toFixed(2)} ${source.y.toFixed(2)} L ${CENTER} ${CENTER} L ${target.x.toFixed(2)} ${target.y.toFixed(2)}`
+  return `M ${source.x.toFixed(2)} ${source.y.toFixed(2)} L ${hubIn.x.toFixed(2)} ${hubIn.y.toFixed(2)} L ${hubOut.x.toFixed(2)} ${hubOut.y.toFixed(2)} L ${target.x.toFixed(2)} ${target.y.toFixed(2)}`
 }
 
 export function CircularAstrolabe({
@@ -160,21 +162,24 @@ export function CircularAstrolabe({
     palaces.find((palace) => palace.isBodyPalace)?.index ??
     null
   const aspectIndices = getAspectIndices(focusPalaceIndex)
-  const selfLines = useMemo(() => {
-    const centrifugal = palaces.flatMap((palace) => {
+  const selectedMutagenMap = useMemo(() => {
+    const map = new Map<string, MutagenType>()
+    if (selectedPalaceIndex === null || selectedPalaceIndex === undefined) return map
+    const palace = palaces[selectedPalaceIndex]
+    if (!palace) return map
+    const mutagenStars = getMutagensByHeavenlyStem(palace.heavenlyStem as never)
+    MUTAGEN_ORDER.forEach((type, index) => {
+      const star = mutagenStars[index]
+      if (star) map.set(star, type)
+    })
+    return map
+  }, [selectedPalaceIndex, palaces])
+  const { selfLines, centrifugalTypeMap } = useMemo(() => {
+    const centrifugalTypeMap = new Map<string, MutagenType>()
+    palaces.forEach((palace) => {
       const selfMutagens = getSelfMutagenStars(palace)
-
-      return selfMutagens.map((item, index) => {
-        const angleOffset = (index - (selfMutagens.length - 1) / 2) * 2.8
-
-        return {
-          key: `centrifugal-${palace.index}-${item.type}-${item.star}`,
-          kind: 'centrifugal' as const,
-          palaceIndex: palace.index,
-          type: item.type,
-          star: item.star,
-          d: buildCentrifugalSelfLine(palace.index, angleOffset),
-        }
+      selfMutagens.forEach((item) => {
+        centrifugalTypeMap.set(`${palace.index}-${item.star}`, item.type)
       })
     })
 
@@ -240,7 +245,7 @@ export function CircularAstrolabe({
       d: string
     }>
 
-    return [...centripetal, ...centrifugal]
+    return { selfLines: centripetal, centrifugalTypeMap }
   }, [palaces])
 
   return (
@@ -271,18 +276,13 @@ export function CircularAstrolabe({
         <circle className="circular-outer-disc" cx={CENTER} cy={CENTER} r={OUTER_RADIUS} />
         <circle className="circular-inner-disc" cx={CENTER} cy={CENTER} r={INNER_RADIUS} />
         <circle className="circular-orbit circular-orbit--outer" cx={CENTER} cy={CENTER} r={OUTER_RADIUS} />
-        <circle className="circular-orbit circular-orbit--middle" cx={CENTER} cy={CENTER} r={35.2} />
         <circle className="circular-orbit circular-orbit--inner" cx={CENTER} cy={CENTER} r={INNER_RADIUS} />
 
         {palaces.map((palace) => {
           const startAngle = getPalaceAngle(palace.index) - 15
           const endAngle = getPalaceAngle(palace.index) + 15
           const angle = getPalaceAngle(palace.index)
-          const namePoint = polarToCartesian(NAME_RADIUS, angle)
-          const labelPoint = polarToCartesian(LABEL_RADIUS, angle)
-          const branchPoint = polarToCartesian(BRANCH_RADIUS, angle)
           const displayedStars = getDisplayStars(palace)
-          const starY = labelPoint.y
           const isFocused = palace.index === focusPalaceIndex
           const isSelected = palace.index === selectedPalaceIndex
           const isRelated = aspectIndices.includes(palace.index)
@@ -303,63 +303,133 @@ export function CircularAstrolabe({
               aria-label={`${palace.name}宫 ${palace.heavenlyStem}${palace.earthlyBranch}`}
               onMouseEnter={() => setHoveredPalaceIndex(palace.index)}
               onMouseLeave={() => setHoveredPalaceIndex((current) => (current === palace.index ? null : current))}
-              onClick={() => onSelectPalace?.(palace.index)}
+              onClick={() => onSelectPalace?.(palace.index === selectedPalaceIndex ? null : palace.index)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === ' ') {
                   event.preventDefault()
-                  onSelectPalace?.(palace.index)
+                  onSelectPalace?.(palace.index === selectedPalaceIndex ? null : palace.index)
                 }
               }}
             >
               <path className="circular-sector" d={describeSector(startAngle, endAngle)} />
-              <text className="circular-wedge-name" x={namePoint.x} y={namePoint.y}>
-                {palace.name}
-                {palace.isBodyPalace ? ' 身' : ''}
-                {palace.isOriginalPalace ? ' 因' : ''}
+              <path id={`arc-br-${palace.index}`} className="arc-guide" d={buildArcPath(BRANCH_RADIUS, angle, 7)} />
+              <path id={`arc-nm-${palace.index}`} className="arc-guide" d={buildArcPath(LABEL_RADIUS, angle, 9)} />
+              {decadalPalaceLabel ? (
+                <path id={`arc-dc-${palace.index}`} className="arc-guide" d={buildArcPath(DECADE_RADIUS, angle, 8)} />
+              ) : null}
+              {timelineLabel ? (
+                <path id={`arc-yr-${palace.index}`} className="arc-guide" d={buildArcPath(YEARLY_RADIUS, angle, 9)} />
+              ) : null}
+              <text className="circular-wedge-branch">
+                <textPath href={`#arc-br-${palace.index}`} startOffset="50%" textAnchor="middle">
+                  {palace.heavenlyStem}{palace.earthlyBranch}
+                </textPath>
               </text>
-              <text className="circular-wedge-branch" x={branchPoint.x} y={branchPoint.y}>
-                {palace.heavenlyStem}
-                {palace.earthlyBranch}
+              {decadalPalaceLabel ? (
+                <text className="circular-wedge-decade">
+                  <textPath href={`#arc-dc-${palace.index}`} startOffset="50%" textAnchor="middle">
+                    {decadalPalaceLabel}
+                  </textPath>
+                </text>
+              ) : null}
+              <text className="circular-wedge-name">
+                <textPath href={`#arc-nm-${palace.index}`} startOffset="50%" textAnchor="middle">
+                  {palace.name}
+                </textPath>
               </text>
-              {timelineLabel || decadalPalaceLabel ? (
-                <text className="circular-wedge-time" x={branchPoint.x} y={branchPoint.y + 3.8}>
-                  {timelineLabel ?? decadalPalaceLabel}
+              {(() => {
+                const tags: string[] = []
+                if (palace.isBodyPalace) tags.push('身')
+                if (palace.isOriginalPalace) tags.push('因')
+                if (tags.length === 0) return null
+
+                const tagAngle = angle + 13
+                const spread = tags.length === 1 ? 4 : 7
+                const TW = 3.6; const TH = 2.4
+                return (
+                  <g key="tags">
+                    <path id={`arc-tg-${palace.index}`} className="arc-guide" d={buildArcPath(LABEL_RADIUS, tagAngle, spread)} />
+                    {tags.map((label, i) => {
+                      const ta = tagAngle + (i - (tags.length - 1) / 2) * spread * 0.7
+                      const tp = polarToCartesian(LABEL_RADIUS, ta)
+                      return (
+                        <g key={label}>
+                          <rect className="palace-tag" x={tp.x - TW/2} y={tp.y - TH/2} width={TW} height={TH} rx={TH/2} />
+                          <text className="palace-tag-text">
+                            <textPath href={`#arc-tg-${palace.index}`}
+                              startOffset={tags.length === 1 ? '50%' : `${25 + i * 50}%`}
+                              textAnchor="middle">
+                              {label}
+                            </textPath>
+                          </text>
+                        </g>
+                      )
+                    })}
+                  </g>
+                )
+              })()}
+              {timelineLabel ? (
+                <text className="circular-wedge-yearly">
+                  <textPath href={`#arc-yr-${palace.index}`} startOffset="50%" textAnchor="middle">
+                    {timelineLabel}
+                  </textPath>
                 </text>
               ) : null}
               {displayedStars.map((star, starIndex) => {
-                const starX = labelPoint.x + (starIndex - (displayedStars.length - 1) / 2) * 5.2
-                const pulseX = starX + Math.min(2.8, star.name.length * 1.05)
-                const pulseY = starY - 1.25
-
+                const starAngleOffset = (starIndex - (displayedStars.length - 1) / 2) * 5.5
+                const starAngle = angle + starAngleOffset
+                const sp = polarToCartesian(STAR_OUTER_RADIUS, starAngle)
+                const sx = sp.x
+                const sy = sp.y
+                const charH = 2.8
+                const textH = star.name.length * charH
+                const rectW = 3.2
+                const rectH = textH + 1.4
+                const rectX = -rectW / 2
+                const rectY = -rectH / 2
+                const firstY = -(star.name.length - 1) * charH / 2
                 return (
-                  <g key={`${palace.earthlyBranch}-${star.name}`} className="circular-wedge-star">
-                    <text className="circular-wedge-star-text" x={starX} y={starY}>
-                      {star.name}
-                    </text>
+                  <g key={`${palace.earthlyBranch}-${star.name}`} className="circular-wedge-star"
+                    transform={`translate(${sx}, ${sy}) rotate(${starAngle})`}>
+                    {(() => {
+                      const type = centrifugalTypeMap.get(`${palace.index}-${star.name}`)
+                      if (!type) return null
+                      return (
+                        <line
+                          className={`circular-self-line circular-self-line--centrifugal type-${type}`}
+                          x1={0} y1={firstY - 0.8}
+                          x2={0} y2={firstY - 5}
+                          markerEnd={`url(#circular-arrowhead-${type})`}
+                        />
+                      )
+                    })()}
                     {star.mutagen ? (
-                      <g className={`circular-birth-mutagen type-${star.mutagen}`} transform={`translate(${pulseX} ${pulseY})`}>
-                        <circle className="circular-birth-mutagen-ring" r="0.75" opacity="0">
-                          <animate attributeName="r" values="0.75;3.2;3.2" dur="2600ms" repeatCount="indefinite" />
-                          <animate attributeName="opacity" values="0.42;0;0" dur="2600ms" repeatCount="indefinite" />
-                        </circle>
-                        <circle className="circular-birth-mutagen-ring" r="0.75" opacity="0">
-                          <animate
-                            attributeName="r"
-                            values="0.75;3.2;3.2"
-                            dur="2600ms"
-                            begin="900ms"
-                            repeatCount="indefinite"
-                          />
-                          <animate
-                            attributeName="opacity"
-                            values="0.36;0;0"
-                            dur="2600ms"
-                            begin="900ms"
-                            repeatCount="indefinite"
-                          />
-                        </circle>
-                        <circle className="circular-birth-mutagen-dot" r="0.72" />
-                      </g>
+                      <rect
+                        className={`birth-mutagen-bg type-${star.mutagen}`}
+                        x={rectX} y={rectY}
+                        width={rectW} height={rectH}
+                        rx={rectW / 2}
+                      >
+                        <animate
+                          attributeName="opacity"
+                          values="0.22;0.42;0.22"
+                          dur="2600ms"
+                          repeatCount="indefinite"
+                        />
+                      </rect>
+                    ) : null}
+                    <text className="circular-wedge-star-text" textAnchor="middle">
+                      {star.name.split('').map((char, ci) => (
+                        <tspan key={ci} x={0} dy={ci === 0 ? firstY : charH}>{char}</tspan>
+                      ))}
+                    </text>
+                    {selectedMutagenMap.has(star.name) ? (
+                      <rect
+                        className={`selection-mutagen-border type-${selectedMutagenMap.get(star.name)}`}
+                        x={rectX} y={rectY}
+                        width={rectW} height={rectH}
+                        rx={rectW / 2}
+                      />
                     ) : null}
                   </g>
                 )
@@ -389,7 +459,7 @@ export function CircularAstrolabe({
             key={line.key}
             className={`circular-self-line circular-self-line--${line.kind} type-${line.type}`}
             d={line.d}
-            markerEnd={line.kind === 'centripetal' ? `url(#circular-arrowhead-${line.type})` : undefined}
+            markerEnd={`url(#circular-arrowhead-${line.type})`}
           />
         ))}
 

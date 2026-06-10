@@ -6,7 +6,7 @@ import type { ChartConfig } from '../types'
 type SihuaAstrolabeProps = {
   config: ChartConfig
   selectedPalaceIndex?: number | null
-  onSelectPalace?: (palaceIndex: number) => void
+  onSelectPalace?: (palaceIndex: number | null) => void
   timelineOverlay?: {
     displayMode: 'decade' | 'yearly'
     activeYear: number
@@ -241,6 +241,18 @@ export function SihuaAstrolabe({
 
     return { byPalace, byStar }
   }, [palaces])
+  const selectedMutagenMap = useMemo(() => {
+    const map = new Map<string, string>()
+    if (selectedPalaceIndex === null || selectedPalaceIndex === undefined) return map
+    const palace = palaces[selectedPalaceIndex]
+    if (!palace) return map
+    const mutagenStars = getMutagensByHeavenlyStem(palace.heavenlyStem as never)
+    ;(['禄', '权', '科', '忌'] as const).forEach((type, index) => {
+      const star = mutagenStars[index]
+      if (star) map.set(star, type)
+    })
+    return map
+  }, [selectedPalaceIndex, palaces])
   const sourceMutagenGroups = useMemo<SourceMutagenGroup[]>(() => {
     return palaces
       .map((sourcePalace) => {
@@ -485,11 +497,11 @@ export function SihuaAstrolabe({
             tabIndex={0}
             onMouseEnter={() => setHoveredPalaceIndex(palace.index)}
             onMouseLeave={() => setHoveredPalaceIndex((current) => (current === palace.index ? null : current))}
-            onClick={() => onSelectPalace?.(palace.index)}
+            onClick={() => onSelectPalace?.(palace.index === selectedPalaceIndex ? null : palace.index)}
             onKeyDown={(event) => {
               if (event.key === 'Enter' || event.key === ' ') {
                 event.preventDefault()
-                onSelectPalace?.(palace.index)
+                onSelectPalace?.(palace.index === selectedPalaceIndex ? null : palace.index)
               }
             }}
           >
@@ -509,7 +521,7 @@ export function SihuaAstrolabe({
                     key={`${palace.earthlyBranch}-${star.name}`}
                     className={`sihua-star ${hoverType ? `is-hover-${hoverType}` : ''} ${
                       selfTypesForStar.length > 0 ? 'has-self-tail' : ''
-                    }`}
+                    } ${selectedMutagenMap.has(star.name) ? `is-selected-target type-${selectedMutagenMap.get(star.name)}` : ''}`}
                   >
                     <span className="sihua-star-name">{star.name}</span>
                     {selfTypesForStar.length > 0 ? (

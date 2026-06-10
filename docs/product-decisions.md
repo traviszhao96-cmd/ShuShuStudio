@@ -41,3 +41,11 @@
 - GitHub is the primary cloud memory for this project.
 - Stable project memory belongs in versioned markdown files inside the repo.
 - Skills should be treated as method assets, but project context should not live only inside skills.
+
+## Personal agent artifact
+
+- `agent.md` can be treated as a product artifact, not only as a prompt file.
+- The first local prototype is `agent.md` for Zhao.
+- The product shape is: chart signals -> product personality dimensions -> agent behavior rules -> user-correctable defaults.
+- The agent profile should help the user become better through clearer thinking, better execution, safer boundaries, and more personalized product experience.
+- The profile must stay revisable. Behavior feedback has higher authority than the initial astrology-derived configuration.

@@ -35,7 +35,7 @@
 }
 
 .circular-outer-disc {
-  fill: rgba(255, 252, 247, 0.42);
+  fill: none;
   stroke: rgba(82, 65, 43, 0.2);
   stroke-width: 0.34;
 }
@@ -52,13 +52,9 @@
   stroke-width: 0.3;
 }
 
-.circular-orbit--middle {
-  stroke-dasharray: 1.6 1.4;
-}
-
 .circular-sector {
-  fill: rgba(255, 252, 247, 0.08);
-  stroke: rgba(86, 70, 48, 0.08);
+  fill: rgba(255, 252, 247, 0.45);
+  stroke: rgba(86, 70, 48, 0.12);
   stroke-width: 0.12;
   cursor: pointer;
   transition:
@@ -115,11 +111,12 @@
 }
 
 .circular-self-line--centrifugal {
-  stroke-dasharray: 0.8 0.65;
+  stroke-width: 0.55;
 }
 
 .circular-self-line--centripetal {
   stroke-width: 0.58;
+  opacity: 0.45;
 }
 
 .circular-self-line.type-禄 {
@@ -175,6 +172,24 @@
   opacity: 0.95;
 }
 
+/* Birth mutagen background badge */
+.birth-mutagen-bg {
+  pointer-events: none;
+  opacity: 0.28;
+}
+.birth-mutagen-bg.type-禄 {
+  fill: #3d8f48;
+}
+.birth-mutagen-bg.type-权 {
+  fill: #7d4bba;
+}
+.birth-mutagen-bg.type-科 {
+  fill: #3569c8;
+}
+.birth-mutagen-bg.type-忌 {
+  fill: #c44a4a;
+}
+
 .circular-wedge-label {
   pointer-events: none;
   text-anchor: middle;
@@ -196,6 +211,24 @@
   letter-spacing: 0;
 }
 
+.circular-wedge-decade {
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: rgba(90, 55, 40, 0.72);
+  font-size: 1.85px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.circular-wedge-yearly {
+  text-anchor: middle;
+  dominant-baseline: middle;
+  fill: rgba(80, 55, 40, 0.65);
+  font-size: 1.75px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
 .circular-wedge-name {
   text-anchor: middle;
   dominant-baseline: middle;
@@ -207,7 +240,7 @@
 
 .circular-wedge-star-text {
   fill: #5a5146;
-  font-size: 1.85px;
+  font-size: 3.0px;
   font-weight: 600;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -215,6 +248,37 @@
   stroke: rgba(255, 252, 247, 0.68);
   stroke-width: 0.22;
   stroke-linejoin: round;
+}
+
+.arc-guide {
+  fill: none;
+  stroke: none;
+}
+
+/* Selected palace mutagen border */
+.selection-mutagen-border {
+  fill: none;
+  stroke-width: 0.55;
+  pointer-events: none;
+}
+.selection-mutagen-border.type-禄 { stroke: #2a6b33; }
+.selection-mutagen-border.type-权 { stroke: #5e2e9e; }
+.selection-mutagen-border.type-科 { stroke: #1d4a8a; }
+.selection-mutagen-border.type-忌 { stroke: #a13030; }
+
+/* Palace tags: 身/因 */
+.palace-tag {
+  fill: #e8c89e;
+  stroke: none;
+  opacity: 0.85;
+}
+.palace-tag-text {
+  fill: #5a4530;
+  font-size: 1.8px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  letter-spacing: 0;
 }
 
 .circular-palace-wedge.is-focused .circular-wedge-name,
@@ -242,9 +306,19 @@
 
   .circular-wedge-star-text,
   .circular-wedge-branch {
-    font-size: 1.7px;
+    font-size: 2.5px;
   }
 
+  .palace-tag-text {
+    font-size: 1.5px;
+  }
+
+  .circular-wedge-decade {
+    font-size: 1.65px;
+  }
+  .circular-wedge-yearly {
+    font-size: 1.55px;
+  }
   .circular-wedge-time {
     display: none;
   }
@@ -1310,9 +1384,24 @@
   gap: 6px;
 }
 
+.sihua-star.is-selected-target {
+  padding: 2px 0;
+}
+
 .sihua-star-name {
   position: relative;
 }
+
+.sihua-star.is-selected-target .sihua-star-name {
+  box-shadow: 0 0 0 2px var(--sel-color);
+  border-radius: 3px;
+  padding: 1px 3px;
+  margin: -1px -3px;
+}
+.sihua-star.is-selected-target.type-禄 { --sel-color: #2d6b36; }
+.sihua-star.is-selected-target.type-权 { --sel-color: #5e2e9e; }
+.sihua-star.is-selected-target.type-科 { --sel-color: #1d4a8a; }
+.sihua-star.is-selected-target.type-忌 { --sel-color: #a13030; }
 
 .sihua-star-selftails {
   display: inline-flex;
@@ -4033,4 +4122,200 @@
     bottom: 21px;
     font-size: 6.5px;
   }
+}
+
+/* AI analysis */
+.analysis-topic-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.analysis-topic-heading-left {
+  flex: 1;
+}
+
+.ai-generate-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 6px 8px;
+  border: 1.5px solid rgba(160, 140, 110, 0.5);
+  border-radius: 10px;
+  background: rgba(255, 252, 247, 0.5);
+  color: #6b5a45;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 150ms;
+}
+.ai-generate-btn:hover {
+  border-color: #8b7355;
+  background: rgba(255, 252, 247, 0.85);
+}
+.ai-generate-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ai-generate-btn-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.ai-generate-btn-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Facts toggle */
+.facts-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  font-size: 0.75em;
+  color: #8b7355;
+  user-select: none;
+}
+.facts-toggle input {
+  width: 14px;
+  height: 14px;
+  accent-color: #8b7355;
+  cursor: pointer;
+  margin: 0;
+}
+.facts-toggle-label {
+  font-weight: 500;
+}
+
+/* AI report structured */
+.ai-report-structured {
+  margin-top: 16px;
+}
+.ai-report-headline-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 0 12px 16px;
+  margin: 0 0 20px;
+  border-bottom: 1px solid rgba(0,0,0,0.06);
+}
+.ai-report-headline {
+  font-family: 'Noto Serif SC', serif;
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #2a2218;
+  margin: 0;
+  padding: 0;
+  border: none;
+  line-height: 1.4;
+}
+.ai-report-card {
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  background: rgba(255,252,247,0.4);
+  border: 1px solid rgba(180,150,120,0.12);
+}
+.ai-report-conclusion {
+  font-size: 0.93em;
+  line-height: 1.75;
+  color: #3a3028;
+  margin: 0;
+}
+.ai-report-facts {
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  font-size: 0.75em;
+  line-height: 1.5;
+  color: #8b7355;
+  background: rgba(200,180,150,0.1);
+  border-radius: 6px;
+  border-left: 2px solid rgba(180,150,120,0.45);
+}
+.ai-report-meta {
+  margin-top: 16px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  font-size: 0.7em;
+  color: #aaa;
+}
+
+.ai-report-empty {
+  padding: 32px 0;
+  text-align: center;
+  color: #b0a090;
+  font-size: 0.9em;
+}
+
+.ai-loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 0;
+  color: var(--tone-muted, #888);
+  font-size: 14px;
+}
+.ai-loading-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #e0d8ce;
+  border-top-color: var(--tone-accent, #3d8f48);
+  border-radius: 50%;
+  animation: ai-spin 800ms linear infinite;
+}
+@keyframes ai-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ai-error {
+  padding: 12px 16px;
+  margin: 12px 0;
+  border-radius: 8px;
+  background: rgba(200, 60, 60, 0.08);
+  color: #a13030;
+  font-size: 13px;
+}
+.ai-error button {
+  margin-left: 8px;
+  padding: 4px 12px;
+  border: 1px solid #a13030;
+  border-radius: 4px;
+  background: none;
+  color: #a13030;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.ai-analysis-content {
+  margin: 16px 0;
+  padding: 16px 20px;
+  border-radius: 10px;
+  background: rgba(255, 252, 247, 0.6);
+  border: 1px solid rgba(180, 160, 130, 0.25);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.ai-analysis-content h1,
+.ai-analysis-content h2,
+.ai-analysis-content h3 {
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+  font-family: 'Noto Serif SC', serif;
+}
+.ai-analysis-content p {
+  margin: 0.5em 0;
+}
+.ai-analysis-content ul,
+.ai-analysis-content ol {
+  padding-left: 1.5em;
+}
+.ai-analysis-content li {
+  margin: 0.3em 0;
 }

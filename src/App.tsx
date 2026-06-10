@@ -259,6 +259,8 @@ function App() {
             selectedPalaceIndex={mode === 'sihua' || mode === 'circle' ? selectedPalaceIndex : null}
             onSelectPalace={setSelectedPalaceIndex}
             topicAnalyses={topicAnalyses}
+            chartModel={chartModel}
+            activeCaseId={activeCaseId}
             timelineOverlay={{
               displayMode: timelineDisplayMode,
               activeYear: resolvedYear,

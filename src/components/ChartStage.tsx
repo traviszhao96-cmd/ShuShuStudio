@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Iztrolabe } from 'react-iztro'
 import type { TopicResult } from '../analysis/types'
 import type { ChartConfig, WorkspaceMode } from '../types'
@@ -24,8 +24,10 @@ type ChartStageProps = {
   headerRight?: ReactNode
   timelineOverlay?: TimelineOverlay
   selectedPalaceIndex?: number | null
-  onSelectPalace?: (palaceIndex: number) => void
+  onSelectPalace?: (palaceIndex: number | null) => void
   topicAnalyses?: TopicResult[]
+  chartModel?: import('../analysis/types').ChartModel | null
+  activeCaseId?: string
 }
 
 const modeItems: Array<{ value: Exclude<WorkspaceMode, 'analysis'>; label: string }> = [
@@ -46,7 +48,10 @@ export function ChartStage({
   selectedPalaceIndex = null,
   onSelectPalace,
   topicAnalyses = [],
+  chartModel = null,
+  activeCaseId,
 }: ChartStageProps) {
+  const [triggerGenerate, setTriggerGenerate] = useState(0)
   return (
     <section className="chart-stage" data-slot="chart-stage">
       <div className="panel-heading" data-slot="chart-header">
@@ -74,10 +79,31 @@ export function ChartStage({
 
         <div className="chart-header-actions">
           {mode === 'analysis' ? (
-            <button type="button" className="enter-chart-button" onClick={onEnterCharts}>
-              命盘
-              <span aria-hidden="true">→</span>
-            </button>
+            <>
+              <button
+                type="button"
+                className="ai-generate-btn"
+                onClick={() => setTriggerGenerate((n) => n + 1)}
+                disabled={!chartModel}
+              >
+                <span className="ai-generate-btn-icon">
+                  <svg width="18" height="18" viewBox="0 0 1024 1024">
+                    <rect width="1024" height="1024" rx="240" fill="#F3E4CC"/>
+                    <g fill="none" stroke="#265C4F" strokeWidth="44">
+                      <ellipse cx="512" cy="512" rx="312" ry="128"/>
+                      <ellipse cx="512" cy="512" rx="312" ry="128" transform="rotate(60 512 512)"/>
+                      <ellipse cx="512" cy="512" rx="312" ry="128" transform="rotate(-60 512 512)"/>
+                    </g>
+                    <circle cx="512" cy="512" r="68" fill="#B16039"/>
+                  </svg>
+                </span>
+                开始分析
+              </button>
+              <button type="button" className="enter-chart-button" onClick={onEnterCharts}>
+                命盘
+                <span aria-hidden="true">→</span>
+              </button>
+            </>
           ) : (
             <div className="chart-mode-tabs" data-slot="chart-mode-tabs">
               {modeItems.map((item) => (
@@ -98,7 +124,7 @@ export function ChartStage({
       </div>
 
       {mode === 'analysis' ? (
-        <AnalysisTopics topics={topicAnalyses} />
+        <AnalysisTopics topics={topicAnalyses} chartModel={chartModel} activeCaseId={activeCaseId} triggerGenerate={triggerGenerate} />
       ) : mode === 'sanhe' ? (
         <div className="chart-frame chart-frame--sanhe" data-slot="chart-canvas">
           <div className="sanhe-chart-scroll">

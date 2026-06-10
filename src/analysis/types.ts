@@ -206,7 +206,7 @@ export type MutagenChainResult = {
   keSuiQuan?: KeSuiQuanItem[]
 }
 
-export type TopicName = '个性' | '家庭' | '学业' | '婚姻' | '交友' | '事业' | '财富' | '健康'
+export type TopicName = '个性' | '事业' | '财富' | '婚姻' | '健康'
 
 export type TopicResult = {
   topic: TopicName
