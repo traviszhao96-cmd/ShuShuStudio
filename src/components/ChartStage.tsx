@@ -1,11 +1,16 @@
-import { useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Iztrolabe } from 'react-iztro'
-import type { TopicResult } from '../analysis/types'
+import type { TopicName } from '../analysis/types'
 import type { ChartConfig, WorkspaceMode } from '../types'
 import { AnalysisTopics } from './AnalysisTopics'
 import { BaziChart } from './BaziChart'
+import { CareerPlanner } from './CareerPlanner'
 import { CircularAstrolabe } from './CircularAstrolabe'
 import { SihuaAstrolabe } from './SihuaAstrolabe'
+import { getLatestReport } from '../agent/reportStore'
+import { parseReport } from '../agent/topicPrompts'
+
+const TOPIC_ORDER: TopicName[] = ['个性', '事业', '财富', '婚姻', '健康']
 
 type TimelineOverlay = {
   displayMode: 'decade' | 'yearly'
@@ -25,9 +30,10 @@ type ChartStageProps = {
   timelineOverlay?: TimelineOverlay
   selectedPalaceIndex?: number | null
   onSelectPalace?: (palaceIndex: number | null) => void
-  topicAnalyses?: TopicResult[]
   chartModel?: import('../analysis/types').ChartModel | null
   activeCaseId?: string
+  activeCaseName?: string
+  onRequireAnalysisLogin?: () => boolean
 }
 
 const modeItems: Array<{ value: Exclude<WorkspaceMode, 'analysis'>; label: string }> = [
@@ -47,14 +53,51 @@ export function ChartStage({
   timelineOverlay,
   selectedPalaceIndex = null,
   onSelectPalace,
-  topicAnalyses = [],
   chartModel = null,
   activeCaseId,
+  activeCaseName = '当前用户',
+  onRequireAnalysisLogin,
 }: ChartStageProps) {
   const [triggerGenerate, setTriggerGenerate] = useState(0)
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  const handleGenerateClick = () => {
+    if (onRequireAnalysisLogin && !onRequireAnalysisLogin()) return
+    if (activeCaseId) {
+      const existing = getLatestReport(activeCaseId)
+      if (existing) {
+        setShowConfirm(true)
+        return
+      }
+    }
+    setTriggerGenerate((n) => n + 1)
+  }
+
+  const handleConfirmGenerate = () => {
+    if (onRequireAnalysisLogin && !onRequireAnalysisLogin()) return
+    setShowConfirm(false)
+    setTriggerGenerate((n) => n + 1)
+  }
   return (
-    <section className="chart-stage" data-slot="chart-stage">
-      <div className="panel-heading" data-slot="chart-header">
+    <section className={`chart-stage ${mode === 'career' ? 'chart-stage--career' : ''}`} data-slot="chart-stage">
+      {showConfirm && activeCaseId ? (() => {
+        const existing = getLatestReport(activeCaseId)
+        return (
+          <div className="ai-confirm-overlay" onClick={() => setShowConfirm(false)}>
+            <div className="ai-confirm-dialog" onClick={(e) => e.stopPropagation()}>
+              <p className="ai-confirm-title">重新生成报告</p>
+              <p className="ai-confirm-body">
+                当前已有报告{existing ? `（${new Date(existing.generatedAt).toLocaleString('zh-CN')}）` : ''}，需要重新生成吗？
+              </p>
+              <div className="ai-confirm-actions">
+                <button type="button" className="ai-confirm-btn ai-confirm-btn--secondary" onClick={() => setShowConfirm(false)}>取消</button>
+                <button type="button" className="ai-confirm-btn ai-confirm-btn--primary" onClick={handleConfirmGenerate}>重新生成</button>
+              </div>
+            </div>
+          </div>
+        )
+      })() : null}
+      {mode !== 'career' ? <div className="panel-heading" data-slot="chart-header">
         <div className="chart-heading-main" data-slot="chart-header-left">
           {mode !== 'analysis' ? (
             <button type="button" className="chart-back-button" onClick={onBackToAnalysis} aria-label="返回分析">
@@ -83,7 +126,7 @@ export function ChartStage({
               <button
                 type="button"
                 className="ai-generate-btn"
-                onClick={() => setTriggerGenerate((n) => n + 1)}
+                onClick={handleGenerateClick}
                 disabled={!chartModel}
               >
                 <span className="ai-generate-btn-icon">
@@ -103,6 +146,12 @@ export function ChartStage({
                 命盘
                 <span aria-hidden="true">→</span>
               </button>
+              {activeCaseName === '赵' ? (
+                <button type="button" className="enter-chart-button career-entry-button" onClick={() => onChangeMode('career')}>
+                  职业规划
+                  <span aria-hidden="true">→</span>
+                </button>
+              ) : null}
             </>
           ) : (
             <div className="chart-mode-tabs" data-slot="chart-mode-tabs">
@@ -121,10 +170,21 @@ export function ChartStage({
 
           {headerRight}
         </div>
-      </div>
+      </div> : null}
 
-      {mode === 'analysis' ? (
-        <AnalysisTopics topics={topicAnalyses} chartModel={chartModel} activeCaseId={activeCaseId} triggerGenerate={triggerGenerate} />
+      {mode === 'career' ? (
+        <CareerPlanner
+          caseId={activeCaseId ?? 'no-case'}
+          caseName={activeCaseName}
+          chartModel={chartModel}
+        />
+      ) : mode === 'analysis' ? (
+        <AnalysisTopics
+          key={activeCaseId ?? 'no-case'}
+          chartModel={chartModel}
+          activeCaseId={activeCaseId}
+          triggerGenerate={triggerGenerate}
+        />
       ) : mode === 'sanhe' ? (
         <div className="chart-frame chart-frame--sanhe" data-slot="chart-canvas">
           <div className="sanhe-chart-scroll">
@@ -178,5 +238,79 @@ export function ChartStage({
         </div>
       )}
     </section>
+  )
+}
+
+export function ChartBottomAnalysis({ caseId, source }: { caseId: string; source: 'ziwei' | 'bazi' }) {
+  const [topic, setTopic] = useState<TopicName>('个性')
+  const sectionRefs = useRef<Map<TopicName, HTMLElement>>(new Map())
+
+  const report = useMemo(() => getLatestReport(caseId), [caseId])
+  const sourceReports = report?.sources?.[source] as Record<string, string> | undefined
+  const parsedTopics = useMemo(() => TOPIC_ORDER.map((name) => {
+    const raw = sourceReports?.[name] ?? ''
+    return { name, parsed: raw ? parseReport(raw) : null }
+  }), [sourceReports])
+  const hasSourceReport = parsedTopics.some(({ parsed }) => parsed && parsed.sections.length > 0)
+
+  useEffect(() => {
+    if (!hasSourceReport) return
+
+    const updateTopic = () => {
+      let nextTopic = TOPIC_ORDER[0]
+      for (const name of TOPIC_ORDER) {
+        const section = sectionRefs.current.get(name)
+        if (section && section.getBoundingClientRect().top <= 150) nextTopic = name
+      }
+      setTopic((current) => current === nextTopic ? current : nextTopic)
+    }
+
+    updateTopic()
+    window.addEventListener('scroll', updateTopic, { passive: true })
+    return () => window.removeEventListener('scroll', updateTopic)
+  }, [hasSourceReport])
+
+  if (!report || !hasSourceReport) return null
+
+  const scrollToTopic = (name: TopicName) => {
+    setTopic(name)
+    sectionRefs.current.get(name)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  return (
+    <article className="chart-module-report">
+      <header className="chart-module-report-header">
+        <p className="section-kicker">{source === 'ziwei' ? 'Ziwei Report' : 'Bazi Report'}</p>
+        <h2>{source === 'ziwei' ? '紫微斗数专题报告' : '四柱八字专题报告'}</h2>
+        <p>本报告来自分析模式中生成的{source === 'ziwei' ? '紫微斗数' : '四柱八字'}独立分析。</p>
+      </header>
+
+      <nav className="analysis-topic-tabs chart-module-report-tabs" aria-label={`${source === 'ziwei' ? '紫微斗数' : '四柱八字'}报告章节`}>
+        {TOPIC_ORDER.map((name) => (
+          <button key={name} type="button" className={`analysis-topic-tab ${topic === name ? 'is-active' : ''}`}
+            aria-current={topic === name ? 'true' : undefined}
+            onClick={() => scrollToTopic(name)}>{name}</button>
+        ))}
+      </nav>
+
+      <div className="chart-module-report-article">
+        {parsedTopics.map(({ name, parsed }) => (
+          <section key={name} className="chart-module-report-section"
+            ref={(element) => {
+              if (element) sectionRefs.current.set(name, element)
+              else sectionRefs.current.delete(name)
+            }}>
+            <p className="ai-report-topic-label">{name}</p>
+            <h3>{parsed?.headline || name}</h3>
+            {parsed?.sections.map((section, index) => (
+              <div key={index} className="chart-module-report-point">
+                {section.conclusion ? <p>{section.conclusion}</p> : null}
+                {section.facts ? <p className="ai-report-facts">{section.facts}</p> : null}
+              </div>
+            ))}
+          </section>
+        ))}
+      </div>
+    </article>
   )
 }

@@ -1,5 +1,6 @@
 import { astro } from 'iztro'
 import type {
+  BaziPillars,
   CaseRecord,
   ChartConfig,
   ChartSummary,
@@ -7,6 +8,7 @@ import type {
   TimelineModel,
   ZiweiInsightPayload,
 } from './types'
+import { Lunar, Solar } from 'lunar-typescript'
 
 const PALACE_ORDER = [
   '命宫',
@@ -179,6 +181,21 @@ function buildAstrolabe(config: ChartConfig) {
     : astro.byLunar(config.birthday, config.birthTime, config.gender, false, true, 'zh-CN')
 }
 
+export function buildBaziPillars(config: ChartConfig): BaziPillars | null {
+  try {
+    const { yearly, monthly, daily, hourly } = buildAstrolabe(config).rawDates.chineseDate
+
+    return {
+      yearPillar: yearly.join(''),
+      monthPillar: monthly.join(''),
+      dayPillar: daily.join(''),
+      hourPillar: hourly.join(''),
+    }
+  } catch {
+    return null
+  }
+}
+
 export function toTimeIndex(value: string) {
   const [rawHour = '0'] = value.split(':')
   const hour = Number(rawHour)
@@ -213,6 +230,12 @@ export function formatCaseHeaderDates(
   lunarLabel: string,
 ) {
   const [year = '', month = '', day = ''] = birthday.split('-')
+  if (birthTimeText === '未知') {
+    return {
+      solarHeaderLabel: `${year}年${Number(month)}月${Number(day)}日 时间未知`,
+      lunarHeaderLabel: `${lunarLabel}时辰未知`,
+    }
+  }
   const solarHeaderLabel = `${year}年${Number(month)}月${Number(day)}日${birthTimeText}`
   const timeBranches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥', '子']
   const timeBranch = timeBranches[toTimeIndex(birthTimeText)] ?? '子'
@@ -364,6 +387,54 @@ export function buildTimelineModel(config: ChartConfig, pivotYear = new Date().g
       defaultDecadalIndex: currentHoroscope.decadal.index,
       defaultYear: pivotYear,
     }
+  } catch {
+    return null
+  }
+}
+
+export function buildBaziTimelineModel(config: ChartConfig, pivotYear = new Date().getFullYear()): TimelineModel | null {
+  try {
+    const [year, month, day] = config.birthday.split('-').map(Number)
+    const [hour = 12, minute = 0] =
+      config.birthTimeText === '未知' ? [] : config.birthTimeText.split(':').map(Number)
+    const lunar =
+      config.birthdayType === 'lunar'
+        ? Lunar.fromYmdHms(year, month, day, hour, minute, 0)
+        : Solar.fromYmdHms(year, month, day, hour, minute, 0).getLunar()
+    const yun = lunar.getEightChar().getYun(config.gender === 'male' ? 1 : 0)
+
+    const decadalOptions = yun.getDaYun(10)
+      .filter((daYun) => daYun.getIndex() > 0 && daYun.getGanZhi())
+      .map((daYun) => {
+        const ganZhi = daYun.getGanZhi()
+        return {
+          palaceIndex: daYun.getIndex(),
+          palaceName: '大运',
+          heavenlyStem: ganZhi.slice(0, 1),
+          earthlyBranch: ganZhi.slice(1, 2),
+          startAge: daYun.getStartAge(),
+          endAge: daYun.getEndAge(),
+          decadalPalaceLabels: [],
+          years: daYun.getLiuNian(10).map((liuNian) => ({
+            year: liuNian.getYear(),
+            nominalAge: liuNian.getAge(),
+            yearlyIndex: 0,
+            yearlyPalaceLabels: [],
+          })),
+        }
+      })
+
+    const active =
+      decadalOptions.find((option) => option.years.some((yearOption) => yearOption.year === pivotYear)) ??
+      decadalOptions[0]
+
+    return active
+      ? {
+          decadalOptions,
+          defaultDecadalIndex: active.palaceIndex,
+          defaultYear: active.years.find((yearOption) => yearOption.year === pivotYear)?.year ?? active.years[0].year,
+        }
+      : null
   } catch {
     return null
   }

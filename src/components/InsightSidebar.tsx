@@ -50,17 +50,10 @@ function OverallPatternPanel({ overall }: { overall: OverallResult }) {
   return (
     <section className="feature-card palace-detail-panel" data-slot="overall-pattern">
       <p className="section-kicker">Overall Pattern</p>
-      <h2>
-        格局总览
-        <span>
-          {overall.patternLabel} · {overall.energyQuadrant}
-        </span>
-      </h2>
+      <h2>格局总览</h2>
 
       <div className="palace-detail-meta">
         <span>来因 {overall.laiyinGong}</span>
-        <span>格局 {overall.patternScore}</span>
-        <span>能量 {overall.energyScore}</span>
       </div>
 
       <div className="skill-insight-panel">

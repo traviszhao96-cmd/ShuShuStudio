@@ -1,4 +1,4 @@
-import { History, Plus, Settings, Trash2, X } from 'lucide-react'
+import { History, Plus, Trash2, X } from 'lucide-react'
 import {
   useEffect,
   useCallback,
@@ -21,17 +21,15 @@ import {
 } from '../agent/chatHistory'
 import { buildAgentRequestMarkdown } from '../agent/contextMarkdown'
 import {
-  isAgentApiConfigured,
   loadAgentApiSettings,
   requestAgentReply,
-  saveAgentApiSettings,
-  type AgentApiSettings,
 } from '../agent/modelClient'
 
 type AgentTalkBarProps = {
   contextMarkdown: string
   activeCase: AgentChatCase
   onActivateCase: (caseId: string) => void
+  embedded?: boolean
 }
 
 type CaseAnchorRect = {
@@ -60,13 +58,12 @@ function formatSessionTime(timestamp: number) {
   }).format(timestamp)
 }
 
-export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: AgentTalkBarProps) {
+export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase, embedded = false }: AgentTalkBarProps) {
   const [draft, setDraft] = useState('')
   const [previewQuestion, setPreviewQuestion] = useState('')
-  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [isChatOpen, setIsChatOpen] = useState(embedded)
   const [isHistoryOpen, setIsHistoryOpen] = useState(false)
   const [isContextOpen, setIsContextOpen] = useState(false)
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isHidden, setIsHidden] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -74,9 +71,7 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
   const [caseAnchorRect, setCaseAnchorRect] = useState<CaseAnchorRect | null>(null)
   const [sessions, setSessions] = useState(loadAgentChatSessions)
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
-  const [apiSettings, setApiSettings] = useState<AgentApiSettings>(loadAgentApiSettings)
-  const [settingsDraft, setSettingsDraft] = useState<AgentApiSettings>(loadAgentApiSettings)
-  const [settingsSaved, setSettingsSaved] = useState(false)
+  const [apiSettings] = useState(loadAgentApiSettings)
   const [copyStatus, setCopyStatus] = useState<'idle' | 'copied' | 'error'>('idle')
   const lastScrollY = useRef(0)
   const dragStartY = useRef<number | null>(null)
@@ -230,6 +225,10 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
 
   function openChat() {
     ensureActiveSession()
+    if (embedded) {
+      setIsChatOpen(true)
+      return
+    }
     const sourceCard = document.querySelector<HTMLElement>('.case-header-panel .case-current-card')
     if (sourceCard) {
       const rect = sourceCard.getBoundingClientRect()
@@ -248,24 +247,6 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
     setPreviewQuestion(question.trim())
     setCopyStatus('idle')
     setIsContextOpen(true)
-  }
-
-  function openSettings() {
-    setSettingsDraft(apiSettings)
-    setSettingsSaved(false)
-    setIsSettingsOpen(true)
-  }
-
-  function persistSettings() {
-    const nextSettings = {
-      apiUrl: settingsDraft.apiUrl.trim(),
-      apiKey: settingsDraft.apiKey.trim(),
-      model: settingsDraft.model.trim(),
-    }
-    saveAgentApiSettings(nextSettings)
-    setApiSettings(nextSettings)
-    setSettingsSaved(true)
-    window.setTimeout(() => setIsSettingsOpen(false), 350)
   }
 
   function startNewChat() {
@@ -316,14 +297,8 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
 
   async function sendMessage(question = draft) {
     const normalized = question.trim()
-    const sessionId = activeSession?.id
+    const sessionId = activeSession?.id ?? ensureActiveSession().id
     if (!normalized || isSending || !sessionId) return
-
-    if (!isAgentApiConfigured(apiSettings)) {
-      setDraft(normalized)
-      openSettings()
-      return
-    }
 
     const userMessage = createAgentChatMessage('user', normalized)
     const statusMessage = createAgentChatMessage(
@@ -362,7 +337,7 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
       )
     } catch (error) {
       if (controller.signal.aborted) return
-      const message = error instanceof Error ? error.message : '模型请求失败，请检查 API 设置后重试。'
+      const message = error instanceof Error ? error.message : '分析服务请求失败，请稍后重试。'
       updateSessionMessages(sessionId, (current) =>
         current.map((item) =>
           item.id === statusMessage.id
@@ -389,7 +364,8 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
 
   return (
     <>
-      <div className={`agent-talkbar-shell ${isHidden || isChatOpen || isContextOpen || isSettingsOpen ? 'is-hidden' : ''}`}>
+      {/* collapsed-pill animation disabled — keep simple hide/show */}
+      {!embedded ? <div className={`agent-talkbar-shell${isHidden || isChatOpen || isContextOpen ? ' is-hidden' : ''}`}>
         <form
           className="agent-talkbar"
           onSubmit={(event) => {
@@ -418,11 +394,11 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
             ↑
           </button>
         </form>
-      </div>
+      </div> : null}
 
       {isChatOpen ? (
         <>
-          <div
+          {!embedded ? <div
             className="agent-chat-case-anchor case-current-card"
             style={
               caseAnchorRect
@@ -458,24 +434,24 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
             <div className="case-expand-button agent-chat-case-end" aria-hidden="true">
               <span className="case-inline-arrow">▾</span>
             </div>
-          </div>
+          </div> : null}
           <div
-            className="agent-chat-overlay"
+            className={`agent-chat-overlay ${embedded ? 'is-embedded' : ''}`}
             role="presentation"
-            style={caseAnchorRect ? { top: caseAnchorRect.overlayTop } : undefined}
+            style={!embedded && caseAnchorRect ? { top: caseAnchorRect.overlayTop } : undefined}
           >
             <section
-              className={`agent-chat-sheet ${isDragging ? 'is-dragging' : ''}`}
+              className={`agent-chat-sheet ${embedded ? 'is-embedded' : ''} ${isDragging ? 'is-dragging' : ''}`}
               style={{ transform: `translateY(${dragOffset}px)` }}
-              role="dialog"
-              aria-modal="true"
+              role={embedded ? 'region' : 'dialog'}
+              aria-modal={embedded ? undefined : 'true'}
               aria-labelledby="agent-chat-title"
             >
               <header
                 className="agent-chat-header agent-chat-drag-region"
-                onPointerDown={handleDragStart}
+                onPointerDown={embedded ? undefined : handleDragStart}
               >
-                <div className="agent-chat-handle" aria-hidden="true" />
+                {!embedded ? <div className="agent-chat-handle" aria-hidden="true" /> : null}
                 <button
                   type="button"
                   className="agent-chat-icon-button"
@@ -491,9 +467,7 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
                   <small>
                     {isSending
                       ? '正在生成回答'
-                      : isAgentApiConfigured(apiSettings)
-                        ? `已连接 ${apiSettings.model}`
-                        : '等待填写 DeepSeek API Key'}
+                      : `已连接 ${apiSettings.model}`}
                   </small>
                 </div>
                 <div className="agent-chat-header-actions">
@@ -505,9 +479,6 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
                     title="历史对话"
                   >
                     <History size={16} strokeWidth={1.8} />
-                  </button>
-                  <button type="button" className="agent-chat-icon-button" onClick={openSettings} aria-label="模型设置" title="模型设置">
-                    <Settings size={16} strokeWidth={1.8} />
                   </button>
                   <button type="button" className="agent-chat-icon-button" onClick={startNewChat} aria-label="新对话" title="新对话">
                     <Plus size={17} strokeWidth={1.9} />
@@ -680,69 +651,6 @@ export function AgentTalkBar({ contextMarkdown, activeCase, onActivateCase }: Ag
         </div>
       ) : null}
 
-      {isSettingsOpen ? (
-        <div className="agent-settings-overlay" role="presentation" onClick={() => setIsSettingsOpen(false)}>
-          <form
-            className="agent-settings-sheet"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="agent-settings-title"
-            onClick={(event) => event.stopPropagation()}
-            onSubmit={(event) => {
-              event.preventDefault()
-              persistSettings()
-            }}
-          >
-            <header className="agent-settings-header">
-              <div>
-                <p className="section-kicker">DeepSeek API</p>
-                <h2 id="agent-settings-title">DeepSeek V4 Pro</h2>
-              </div>
-              <button type="button" onClick={() => setIsSettingsOpen(false)} aria-label="关闭">
-                ×
-              </button>
-            </header>
-
-            <div className="agent-settings-fields">
-              <label>
-                <span>完整 API 地址</span>
-                <input
-                  type="url"
-                  value={settingsDraft.apiUrl}
-                  onChange={(event) => setSettingsDraft((current) => ({ ...current, apiUrl: event.target.value }))}
-                  placeholder="https://api.deepseek.com/chat/completions"
-                  required
-                />
-              </label>
-              <label>
-                <span>API Key</span>
-                <input
-                  type="password"
-                  value={settingsDraft.apiKey}
-                  onChange={(event) => setSettingsDraft((current) => ({ ...current, apiKey: event.target.value }))}
-                  placeholder="填写你的 DeepSeek API Key"
-                  required
-                />
-              </label>
-              <label>
-                <span>模型名</span>
-                <input
-                  value={settingsDraft.model}
-                  onChange={(event) => setSettingsDraft((current) => ({ ...current, model: event.target.value }))}
-                  placeholder="deepseek-v4-pro"
-                  required
-                />
-              </label>
-            </div>
-
-            <p className="agent-settings-note">地址与模型已默认配置为 DeepSeek V4 Pro，你只需要填写 API Key。</p>
-
-            <button type="submit" className="agent-settings-save">
-              {settingsSaved ? '已保存' : '保存连接设置'}
-            </button>
-          </form>
-        </div>
-      ) : null}
     </>
   )
 }

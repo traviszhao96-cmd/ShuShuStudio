@@ -29,6 +29,7 @@ export type AgentContextInput = {
 
 const MODE_LABELS: Record<WorkspaceMode, string> = {
   analysis: '分析',
+  career: '职业规划',
   sanhe: '三合',
   sihua: '四化',
   circle: '圆盘四化',
@@ -77,8 +78,6 @@ function buildOverallSection(overall: OverallResult | null) {
   return [
     `- 来因宫：${overall.laiyinGong}`,
     `- 来因解释：${overall.laiyinInterpretation}`,
-    `- 格局：${overall.patternLabel}（${overall.patternScore}）`,
-    `- 能量：${overall.energyQuadrant}（${overall.energyScore}）`,
     `- 四化人格：${overall.personalityType}`,
     `- 人格标签：${overall.personalityTags.join('；') || '暂无'}`,
     '',

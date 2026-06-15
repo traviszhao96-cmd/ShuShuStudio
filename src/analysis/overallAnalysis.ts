@@ -9,20 +9,6 @@ const PERSONALITY_TAGS: Record<SiHuaType, string> = {
   忌: '重结果也容易执着',
 }
 
-function getPatternLabel(score: number): OverallResult['patternLabel'] {
-  if (score >= 82) return '上格'
-  if (score >= 68) return '中上'
-  if (score >= 52) return '中格'
-  return '中下'
-}
-
-function getEnergyQuadrant(score: number, alerts: AlertItem[]): OverallResult['energyQuadrant'] {
-  if (alerts.some((item) => item.severity === 'high')) return '病灶型'
-  if (score >= 72) return '福报型'
-  if (score >= 46) return '隐藏型'
-  return '空白型'
-}
-
 export function buildOverallAnalysis(model: ChartModel | null): OverallResult | null {
   if (!model) return null
 
@@ -46,11 +32,6 @@ export function buildOverallAnalysis(model: ChartModel | null): OverallResult | 
       relatedPalaces: [palace.name],
     })),
   ]
-  const patternScore = Math.max(
-    35,
-    Math.min(96, 58 + model.shengNianSiHua.length * 5 + model.ziHua.length * 2 - alerts.length * 3),
-  )
-  const energyScore = Math.max(20, Math.min(98, 42 + model.ziHua.length * 4 + model.feiHua.length))
   const personalityType = model.shengNianSiHua.map((item) => item.type).join('-') || '待定'
   const personalityTags = model.shengNianSiHua.map((item) => PERSONALITY_TAGS[item.type])
   const jiTarget = model.shengNianSiHua.find((item) => item.type === '忌')
@@ -60,10 +41,6 @@ export function buildOverallAnalysis(model: ChartModel | null): OverallResult | 
     laiyinInterpretation: describeLaiyinGong(model.laiyinGong),
     personalityType,
     personalityTags: Array.from(new Set(personalityTags)),
-    patternScore,
-    patternLabel: getPatternLabel(patternScore),
-    energyScore,
-    energyQuadrant: getEnergyQuadrant(energyScore, alerts),
     alerts,
     highlights: [
       `来因宫落${model.laiyinGong}，一级分析要先从这里定整盘起事点。`,

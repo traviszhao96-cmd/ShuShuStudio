@@ -6,12 +6,19 @@ export type TopicReport = {
   parsed?: { headline: string; sections: Array<{ conclusion: string; facts: string }> }
 }
 
+export type ReportSources = {
+  ziwei: Record<string, string>
+  bazi: Record<string, string>
+  merged: Record<string, TopicReport>
+}
+
 export type AgentReport = {
   id: string
   caseId: string
   generatedAt: number
   version: string
   topics: Record<TopicName, TopicReport>
+  sources?: ReportSources
 }
 
 const STORAGE_KEY = 'ssmaster-agent-reports'
@@ -33,7 +40,12 @@ function saveReports(reports: AgentReport[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(reports))
 }
 
-export function saveReport(caseId: string, version: string, topics: Record<string, TopicReport>): AgentReport {
+export function saveReport(
+  caseId: string,
+  version: string,
+  topics: Record<string, TopicReport>,
+  sources?: ReportSources,
+): AgentReport {
   const reports = loadReports()
   const report: AgentReport = {
     id: makeReportId(),
@@ -41,6 +53,7 @@ export function saveReport(caseId: string, version: string, topics: Record<strin
     generatedAt: Date.now(),
     version,
     topics: topics as Record<TopicName, TopicReport>,
+    sources,
   }
   reports.push(report)
   saveReports(reports)

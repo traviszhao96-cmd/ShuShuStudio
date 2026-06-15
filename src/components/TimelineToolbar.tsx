@@ -1,6 +1,7 @@
 import type { TimelineDecadalOption } from '../types'
 
 type TimelineToolbarProps = {
+  system?: 'ziwei' | 'bazi'
   decadalOptions: TimelineDecadalOption[]
   activeDecadalIndex: number
   activeYear: number
@@ -10,6 +11,7 @@ type TimelineToolbarProps = {
 }
 
 export function TimelineToolbar({
+  system = 'ziwei',
   decadalOptions,
   activeDecadalIndex,
   activeYear,
@@ -21,10 +23,10 @@ export function TimelineToolbar({
     decadalOptions.find((item) => item.palaceIndex === activeDecadalIndex) ?? decadalOptions[0]
 
   return (
-    <section className="timeline-toolbar" data-slot="timeline-toolbar" aria-label="大限与流年选择">
+    <section className="timeline-toolbar" data-slot="timeline-toolbar" aria-label={`${system === 'bazi' ? '大运' : '大限'}与流年选择`}>
       <div className="timeline-stack">
         <div className="timeline-row">
-          <span className="timeline-row-label">大限</span>
+          <span className="timeline-row-label">{system === 'bazi' ? '大运' : '大限'}</span>
           <div className="timeline-chip-rail">
             {decadalOptions.map((item) => (
               <button
@@ -32,14 +34,14 @@ export function TimelineToolbar({
                 type="button"
                 className={`timeline-chip ${activeDecadalIndex === item.palaceIndex ? 'is-active' : ''}`}
                 onClick={() => onSelectDecadal(item.palaceIndex)}
-                aria-label={`${item.startAge}至${item.endAge}岁 ${item.heavenlyStem}${item.earthlyBranch}限`}
+                aria-label={`${item.startAge}至${item.endAge}岁 ${item.heavenlyStem}${item.earthlyBranch}${system === 'bazi' ? '运' : '限'}`}
               >
                 <strong>
                   {item.startAge}~{item.endAge}
                 </strong>
                 <span>
                   {item.heavenlyStem}
-                  {item.earthlyBranch}限
+                  {item.earthlyBranch}{system === 'bazi' ? '运' : '限'}
                 </span>
               </button>
             ))}

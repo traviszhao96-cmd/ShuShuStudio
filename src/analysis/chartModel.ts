@@ -203,6 +203,12 @@ export function buildChartModel(config: ChartConfig): ChartModel | null {
         range: palace.daXianRange ?? '',
       })),
       laiyinGong: normalizeGongName(laiyinPalace.name),
+      bazi: config.bazi?.yearPillar ? {
+        year: config.bazi.yearPillar,
+        month: config.bazi.monthPillar,
+        day: config.bazi.dayPillar,
+        hour: config.bazi.hourPillar,
+      } : undefined,
     }
   } catch {
     return null

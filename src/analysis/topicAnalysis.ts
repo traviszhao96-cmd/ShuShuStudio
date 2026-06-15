@@ -1,4 +1,3 @@
-import { buildOverallAnalysis } from './overallAnalysis'
 import { buildPalaceResult } from './palaceAnalysis'
 import type { ChartModel, GongName, TopicName, TopicResult } from './types'
 
@@ -42,8 +41,6 @@ function describePalace(model: ChartModel, palace: GongName) {
 export function buildTopicAnalyses(model: ChartModel | null): TopicResult[] {
   if (!model) return []
 
-  const overall = buildOverallAnalysis(model)
-
   return (Object.keys(TOPIC_PALACES) as TopicName[]).map((topic) => {
     const focusPalaces = TOPIC_PALACES[topic]
     const palaceResults = focusPalaces
@@ -58,7 +55,7 @@ export function buildTopicAnalyses(model: ChartModel | null): TopicResult[] {
     return {
       topic,
       headline: `${topic}：先看${leadingPalace}`,
-      summary: `${TOPIC_INTRO[topic]}${overall ? ` 当前整盘格局为${overall.patternLabel}、${overall.energyQuadrant}。` : ''}`,
+      summary: `${TOPIC_INTRO[topic]}`,
       focusPalaces,
       points: [
         ...focusPalaces.map((palace) => describePalace(model, palace)),

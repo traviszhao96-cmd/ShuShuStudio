@@ -3,8 +3,9 @@ import * as Tabs from '@radix-ui/react-tabs'
 import { ChevronUp, LoaderCircle, Pencil, Plus, RefreshCw, Save } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { CaseGroupFilter } from '../data'
-import type { BaziPillars, CaseRecord } from '../types'
+import type { BaziPillars, CaseRecord, NewCaseInput } from '../types'
 import { toTimeIndex } from '../utils'
+import { NewCaseDialog } from './NewCaseDialog'
 
 type CasePreview = {
   id: string
@@ -39,7 +40,7 @@ type CaseHeaderPanelProps = {
   onToggleEdit: () => void
   onSaveCases: () => void
   onUpdateCase: (caseId: string, patch: Partial<CaseRecord>) => void
-  onAddCase?: () => void
+  onAddCase: (input: NewCaseInput) => void
 }
 
 export function CaseHeaderPanel({
@@ -61,6 +62,7 @@ export function CaseHeaderPanel({
   onAddCase,
 }: CaseHeaderPanelProps) {
   const [editingKey, setEditingKey] = useState<string | null>(null)
+  const [isAddOpen, setIsAddOpen] = useState(false)
   const panelRef = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -158,7 +160,7 @@ export function CaseHeaderPanel({
             </Tabs.List>
 
             <div className="case-browser-actions">
-              <button type="button" className="case-toolbar-icon-button" onClick={onAddCase} aria-label="新增命例" title="新增命例">
+              <button type="button" className="case-toolbar-icon-button" onClick={() => setIsAddOpen(true)} aria-label="新增命例" title="新增命例">
                 <Plus size={15} strokeWidth={2} />
               </button>
               <button
@@ -310,6 +312,15 @@ export function CaseHeaderPanel({
           </button>
         </Tabs.Root>
       </div>
+
+      <NewCaseDialog
+        key={activeGroup}
+        open={isAddOpen}
+        groups={groups}
+        defaultGroup={activeGroup === '全部' ? '朋友' : activeGroup}
+        onClose={() => setIsAddOpen(false)}
+        onAddCase={onAddCase}
+      />
     </header>
   )
 }

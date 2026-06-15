@@ -85,6 +85,7 @@ export type ChartModel = {
   feiHua: FeiHua[]
   daXian: DaXian[]
   laiyinGong: GongName
+  bazi?: { year: string; month: string; day: string; hour: string | null }
 }
 
 export type AlertItem = {
@@ -99,10 +100,6 @@ export type OverallResult = {
   laiyinInterpretation: string
   personalityType: string
   personalityTags: string[]
-  patternScore: number
-  patternLabel: '上格' | '中上' | '中格' | '中下'
-  energyScore: number
-  energyQuadrant: '福报型' | '病灶型' | '隐藏型' | '空白型'
   alerts: AlertItem[]
   highlights: string[]
 }

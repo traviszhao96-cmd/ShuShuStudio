@@ -85,16 +85,10 @@ export function ReportPanel({ chartModel, overallAnalysis }: ReportPanelProps) {
               <span>格局总览</span>
               <small>原盘结构摘要</small>
             </div>
-            <div className="combined-pattern-badges">
-              <strong>{overallAnalysis.patternLabel}</strong>
-              <strong>{overallAnalysis.energyQuadrant}</strong>
-            </div>
           </div>
 
           <div className="combined-pattern-metrics">
             <span>来因 {overallAnalysis.laiyinGong}</span>
-            <span>格局 {overallAnalysis.patternScore}</span>
-            <span>能量 {overallAnalysis.energyScore}</span>
             <span>四化人格 {overallAnalysis.personalityType}</span>
           </div>
 

@@ -26,6 +26,13 @@ export type CaseRecord = ChartConfig & {
   note: string
 }
 
+export type NewCaseInput = Pick<
+  CaseRecord,
+  'name' | 'group' | 'note' | 'birthday' | 'birthTimeText' | 'birthdayType' | 'gender'
+> & {
+  birthTimeSource?: BirthTimeSource
+}
+
 export type ChartSummary = {
   lunarDate: string
   sign: string
@@ -43,7 +50,7 @@ export type ChartSummary = {
   }>
 }
 
-export type WorkspaceMode = 'analysis' | 'sanhe' | 'sihua' | 'circle' | 'bazi'
+export type WorkspaceMode = 'analysis' | 'career' | 'sanhe' | 'sihua' | 'circle' | 'bazi'
 
 export type TimelineYearOption = {
   year: number
