@@ -16,6 +16,7 @@ export type GongName =
 export type BasicInfo = {
   gender: 'male' | 'female'
   lunarBirth: string
+  birthYear: number
   shengxiao: string
   tianGan: string
   shenGong: GongName
@@ -88,10 +89,28 @@ export type ChartModel = {
 }
 
 export type AlertItem = {
-  severity: 'high' | 'medium' | 'low'
+  severity: 'critical' | 'high' | 'medium' | 'low'
   category: string
   description: string
   relatedPalaces: GongName[]
+}
+
+export type PalaceScoreItem = {
+  palace: GongName
+  quality: { score: number; grade: string; breakdown: string[] }
+  energy: { score: number; grade: string; breakdown: string[] }
+  quadrant: string
+  natalHua: string[]
+  natalHuaMeaning: string
+  tiYongNote: string
+}
+
+export type PatternItem = {
+  name: string
+  category: '吉' | '煞' | '特殊'
+  description: string
+  judgment: string
+  palaces: GongName[]
 }
 
 export type OverallResult = {
@@ -99,12 +118,46 @@ export type OverallResult = {
   laiyinInterpretation: string
   personalityType: string
   personalityTags: string[]
-  patternScore: number
-  patternLabel: '上格' | '中上' | '中格' | '中下'
-  energyScore: number
-  energyQuadrant: '福报型' | '病灶型' | '隐藏型' | '空白型'
   alerts: AlertItem[]
   highlights: string[]
+  palaceScores: PalaceScoreItem[]
+  patterns: PatternItem[]
+  natalSiHua: NatalSiHuaOverview
+}
+
+export type NatalSiHuaItem = {
+  star: string
+  type: SiHuaType
+  palace: GongName
+  meaning: string
+  duiGong: GongName
+  duiGongRelation: string
+  liuNeiWai: '六内' | '六外'
+}
+
+export type ZhenJiaLu = {
+  luItem: NatalSiHuaItem
+  jiItem: NatalSiHuaItem
+  isZhen: boolean
+  grade: '最优' | '真禄' | '假禄·差' | '假禄'
+  narrative: string
+}
+
+export type NatalSiHuaOverview = {
+  items: NatalSiHuaItem[]
+  summary: string
+  distribution: string
+  zhenJiaLu: ZhenJiaLu | null
+  abilityFlow: string
+  jiDeepDive: {
+    star: string
+    palace: GongName
+    meaning: string
+    duiGong: GongName
+    duiImpact: string
+    liuNeiWai: '六内' | '六外'
+    narrative: string
+  }
 }
 
 export type PalaceBasic = {
@@ -204,4 +257,35 @@ export type MutagenChainResult = {
   jiChains: JiChain[]
   luSuiJi: LuSuiJiItem[]
   keSuiQuan?: KeSuiQuanItem[]
+  heTuBreaks: HeTuBreakItem[]
+}
+
+export type HeTuBreakItem = {
+  groupName: string
+  groupTheme: string
+  from: GongName
+  to: GongName
+  star: string
+  targetPalace: GongName
+  severity: 'high' | 'medium' | 'critical'
+  triggers: string[]
+  directInterpretation: string
+  transferredInterpretation: string
+  asymmetricNote?: string
+  affectedLines: {
+    palace: GongName
+    line: [GongName, GongName]
+    daXianRange: string
+    isPrimary: boolean
+  }[]
+  liuNianGroups: {
+    daXianPalace: GongName
+    daXianRange: string
+    years: { tianGanDiZhi: string; age: number; isTaiSui: boolean }[]
+  }[]
+  taiSuiCycle: {
+    diZhi: string
+    shengXiao: string
+    years: { tianGanDiZhi: string; age: number }[]
+  }
 }
