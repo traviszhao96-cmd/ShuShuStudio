@@ -23,3 +23,9 @@ db/cases.sqlite
 *.njsproj
 *.sln
 *.sw?
+
+# tmp debug scripts
+src/analysis/tmp_*.ts
+
+# tmp debug scripts
+src/analysis/tmp_*.ts
