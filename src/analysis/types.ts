@@ -16,6 +16,7 @@ export type GongName =
 export type BasicInfo = {
   gender: 'male' | 'female'
   lunarBirth: string
+  birthYear: number
   shengxiao: string
   tianGan: string
   shenGong: GongName
@@ -40,6 +41,11 @@ export type PalaceModel = {
   mainStar: string[]
   minorStar: string[]
   adjectiveStar: string[]
+  majorStar?: string
+  coStar?: string
+  majorStarBrightness?: string
+  coStarBrightness?: string
+  minorStars?: string[]
   shengNianSiHua?: { star: string; hua: SiHuaType }
   ziHua?: { star: string; hua: SiHuaType; direction: '离心' | '向心' }
 }
@@ -89,19 +95,133 @@ export type ChartModel = {
 }
 
 export type AlertItem = {
-  severity: 'high' | 'medium' | 'low'
+  severity: 'critical' | 'high' | 'medium' | 'low'
   category: string
   description: string
   relatedPalaces: GongName[]
 }
 
+export type PalaceScoreItem = {
+  palace: GongName
+  quality: { score: number; grade: string; breakdown: string[] }
+  energy: { score: number; grade: string; breakdown: string[] }
+  quadrant: string
+  natalHua: string[]
+  natalHuaMeaning: string
+  tiYongNote: string
+}
+
+export type PatternItem = {
+  name: string
+  category: '吉' | '煞' | '特殊'
+  description: string
+  judgment: string
+  palaces: GongName[]
+}
+
+export type MingQianAxisOverview = {
+  ming: {
+    stars: string
+    diZhi: string
+    natalHua: string[]
+  }
+  qianyi: {
+    stars: string
+    diZhi: string
+    natalHua: string[]
+  }
+  summary: string
+}
+
 export type OverallResult = {
   laiyinGong: GongName
+  shenGong: GongName
   laiyinInterpretation: string
   personalityType: string
   personalityTags: string[]
   alerts: AlertItem[]
   highlights: string[]
+  palaceScores: PalaceScoreItem[]
+  patterns: PatternItem[]
+  natalSiHua: NatalSiHuaOverview
+  mingQianAxis: MingQianAxisOverview
+}
+
+export type TopicName = '个性' | '事业' | '财富' | '婚姻' | '健康'
+
+export type TopicResult = {
+  topic: TopicName
+  headline: string
+  summary: string
+  focusPalaces: GongName[]
+  points: string[]
+  alerts: AlertItem[]
+}
+
+export type ChartProfile = {
+  generatedAt: number
+  chartModelHash: string
+  baziPattern: {
+    patternName: string
+    dayMasterAssessment: string
+    keyDynamics: string[]
+    fiveElementComment: string
+  }
+  ziweiStructure: {
+    coreStructure: string
+    lifeBodyAxis: string
+    keyPalaces: Array<{ palace: string; signal: string }>
+    laiyinTheme: string
+  }
+  integratedArchetype: {
+    name: string
+    oneLine: string
+    strengthClusters: string[]
+    riskClusters: string[]
+  }
+  sihuaCore: {
+    dynamicSummary: string
+    jiImpact: string
+    quanImpact: string
+    keImpact: string
+    luImpact: string
+  }
+  confidence: 'high' | 'medium' | 'low'
+}
+
+export type NatalSiHuaItem = {
+  star: string
+  type: SiHuaType
+  palace: GongName
+  meaning: string
+  duiGong: GongName
+  duiGongRelation: string
+  liuNeiWai: '六内' | '六外'
+}
+
+export type ZhenJiaLu = {
+  luItem: NatalSiHuaItem
+  jiItem: NatalSiHuaItem
+  isZhen: boolean
+  grade: '最优' | '真禄' | '假禄·差' | '假禄'
+  narrative: string
+}
+
+export type NatalSiHuaOverview = {
+  items: NatalSiHuaItem[]
+  summary: string
+  distribution: string
+  zhenJiaLu: ZhenJiaLu | null
+  abilityFlow: string
+  jiDeepDive: {
+    star: string
+    palace: GongName
+    meaning: string
+    duiGong: GongName
+    duiImpact: string
+    liuNeiWai: '六内' | '六外'
+    narrative: string
+  }
 }
 
 export type PalaceBasic = {
@@ -201,15 +321,35 @@ export type MutagenChainResult = {
   jiChains: JiChain[]
   luSuiJi: LuSuiJiItem[]
   keSuiQuan?: KeSuiQuanItem[]
+  heTuBreaks: HeTuBreakItem[]
 }
 
-export type TopicName = '个性' | '事业' | '财富' | '婚姻' | '健康'
-
-export type TopicResult = {
-  topic: TopicName
-  headline: string
-  summary: string
-  focusPalaces: GongName[]
-  points: string[]
-  alerts: AlertItem[]
+export type HeTuBreakItem = {
+  groupName: string
+  groupTheme: string
+  from: GongName
+  to: GongName
+  star: string
+  targetPalace: GongName
+  severity: 'high' | 'medium' | 'critical'
+  triggers: string[]
+  directInterpretation: string
+  transferredInterpretation: string
+  asymmetricNote?: string
+  affectedLines: {
+    palace: GongName
+    line: [GongName, GongName]
+    daXianRange: string
+    isPrimary: boolean
+  }[]
+  liuNianGroups: {
+    daXianPalace: GongName
+    daXianRange: string
+    years: { tianGanDiZhi: string; age: number; isTaiSui: boolean }[]
+  }[]
+  taiSuiCycle: {
+    diZhi: string
+    shengXiao: string
+    years: { tianGanDiZhi: string; age: number }[]
+  }
 }

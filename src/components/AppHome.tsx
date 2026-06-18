@@ -1,8 +1,10 @@
-import { ArrowRight, BriefcaseBusiness, ChartNoAxesCombined, ChevronDown, Compass, Sparkles } from 'lucide-react'
-import type { WorkspaceMode } from '../types'
+import { ArrowRight, ChartNoAxesCombined, Compass, Sparkles, VenetianMask } from 'lucide-react'
+import type { GenderType, WorkspaceMode } from '../types'
+import { CaseSwitchButton } from './CaseSwitchButton'
 
 type AppHomeProps = {
   caseName: string
+  caseGender: GenderType
   onOpenTool: (mode: WorkspaceMode) => void
   onOpenCases: () => void
 }
@@ -23,9 +25,9 @@ const tools: Array<{
   },
   {
     mode: 'career',
-    icon: BriefcaseBusiness,
-    title: '职业方向',
-    description: '校准职业判断，选择方向，并开始一次现实验证。',
+    icon: VenetianMask,
+    title: '命运牌组',
+    description: '翻开 3 张优势与 3 张弱点牌，看看哪些判断真的有感觉。',
     status: '首次实验',
   },
   {
@@ -44,58 +46,22 @@ const tools: Array<{
   },
 ]
 
-export function AppHome({ caseName, onOpenTool, onOpenCases }: AppHomeProps) {
+export function AppHome({ caseName, caseGender, onOpenTool, onOpenCases }: AppHomeProps) {
   return (
     <main className="app-home">
       <header className="home-topbar">
         <div>
           <p className="section-kicker">Fate-ish</p>
-          <button type="button" className="home-case-switcher" onClick={onOpenCases}>
-            下午好，{caseName}
-            <ChevronDown size={15} />
-          </button>
+          <strong>下午好，{caseName}</strong>
         </div>
-        <button type="button" className="home-avatar-mini" aria-label="当前虚拟形象">命</button>
+        <CaseSwitchButton caseName={caseName} gender={caseGender} onClick={onOpenCases} />
       </header>
-
-      <section className="companion-hero">
-        <div className="companion-visual" aria-hidden="true">
-          <div className="companion-orbit companion-orbit-a" />
-          <div className="companion-orbit companion-orbit-b" />
-          <div className="companion-face">
-            <span />
-            <span />
-          </div>
-        </div>
-        <div className="companion-copy">
-          <p className="section-kicker">Today’s Direction</p>
-          <h1>今天先收束方向，完成一次真实验证。</h1>
-          <p>
-            你现在更需要用现实反馈确认职业方向，而不是继续增加新的分析。先选择一个方向，给自己七天时间做出可被检验的成果。
-          </p>
-          <div className="companion-actions">
-            <button type="button" onClick={() => onOpenTool('career')}>
-              继续职业规划 <ArrowRight size={16} />
-            </button>
-            <span>建议依据：当前目标与职业分析</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="home-progress-card">
-        <div>
-          <span>当前人生主线</span>
-          <strong>找到值得长期投入的职业方向</strong>
-        </div>
-        <div className="home-progress-track"><i /></div>
-        <small>第一阶段 · 校准你的职业能力结构</small>
-      </section>
 
       <section className="home-tools">
         <header>
           <div>
             <p className="section-kicker">Tools</p>
-            <h2>从一个具体问题开始</h2>
+            <h2>从一个小工具开始</h2>
           </div>
           <span>4 个工具</span>
         </header>
@@ -106,7 +72,7 @@ export function AppHome({ caseName, onOpenTool, onOpenCases }: AppHomeProps) {
               <button
                 key={tool.mode}
                 type="button"
-                className="home-tool-card"
+                className={`home-tool-card home-tool-card--${tool.mode}`}
                 onClick={() => onOpenTool(tool.mode)}
                 disabled={tool.status === '开发中'}
               >

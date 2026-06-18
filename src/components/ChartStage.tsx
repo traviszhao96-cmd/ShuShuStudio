@@ -24,16 +24,18 @@ type ChartStageProps = {
   config: ChartConfig
   mode: WorkspaceMode
   onChangeMode: (mode: WorkspaceMode) => void
-  onEnterCharts: () => void
   onBackToAnalysis: () => void
   headerRight?: ReactNode
   timelineOverlay?: TimelineOverlay
   selectedPalaceIndex?: number | null
   onSelectPalace?: (palaceIndex: number | null) => void
   chartModel?: import('../analysis/types').ChartModel | null
+  overallAnalysis?: import('../analysis/types').OverallResult | null
   activeCaseId?: string
   activeCaseName?: string
   onRequireAnalysisLogin?: () => boolean
+  showHeader?: boolean
+  onAskExplore?: (question: string) => void
 }
 
 const modeItems: Array<{ value: Exclude<WorkspaceMode, 'analysis'>; label: string }> = [
@@ -47,16 +49,18 @@ export function ChartStage({
   config,
   mode,
   onChangeMode,
-  onEnterCharts,
   onBackToAnalysis,
   headerRight,
   timelineOverlay,
   selectedPalaceIndex = null,
   onSelectPalace,
   chartModel = null,
+  overallAnalysis = null,
   activeCaseId,
   activeCaseName = '当前用户',
   onRequireAnalysisLogin,
+  showHeader = true,
+  onAskExplore,
 }: ChartStageProps) {
   const [triggerGenerate, setTriggerGenerate] = useState(0)
   const [showConfirm, setShowConfirm] = useState(false)
@@ -97,7 +101,7 @@ export function ChartStage({
           </div>
         )
       })() : null}
-      {mode !== 'career' ? <div className="panel-heading" data-slot="chart-header">
+      {showHeader && mode !== 'career' ? <div className="panel-heading" data-slot="chart-header">
         <div className="chart-heading-main" data-slot="chart-header-left">
           {mode !== 'analysis' ? (
             <button type="button" className="chart-back-button" onClick={onBackToAnalysis} aria-label="返回分析">
@@ -131,27 +135,17 @@ export function ChartStage({
               >
                 <span className="ai-generate-btn-icon">
                   <svg width="18" height="18" viewBox="0 0 1024 1024">
-                    <rect width="1024" height="1024" rx="240" fill="#F3E4CC"/>
-                    <g fill="none" stroke="#265C4F" strokeWidth="44">
+                    <rect width="1024" height="1024" rx="240" fill="#FFFFFF"/>
+                    <g fill="none" stroke="#2F6F55" strokeWidth="44">
                       <ellipse cx="512" cy="512" rx="312" ry="128"/>
                       <ellipse cx="512" cy="512" rx="312" ry="128" transform="rotate(60 512 512)"/>
                       <ellipse cx="512" cy="512" rx="312" ry="128" transform="rotate(-60 512 512)"/>
                     </g>
-                    <circle cx="512" cy="512" r="68" fill="#B16039"/>
+                    <circle cx="512" cy="512" r="68" fill="#D85B4A"/>
                   </svg>
                 </span>
                 开始分析
               </button>
-              <button type="button" className="enter-chart-button" onClick={onEnterCharts}>
-                命盘
-                <span aria-hidden="true">→</span>
-              </button>
-              {activeCaseName === '赵' ? (
-                <button type="button" className="enter-chart-button career-entry-button" onClick={() => onChangeMode('career')}>
-                  职业规划
-                  <span aria-hidden="true">→</span>
-                </button>
-              ) : null}
             </>
           ) : (
             <div className="chart-mode-tabs" data-slot="chart-mode-tabs">
@@ -177,6 +171,8 @@ export function ChartStage({
           caseId={activeCaseId ?? 'no-case'}
           caseName={activeCaseName}
           chartModel={chartModel}
+          overallAnalysis={overallAnalysis}
+          onAskExplore={onAskExplore}
         />
       ) : mode === 'analysis' ? (
         <AnalysisTopics
@@ -184,6 +180,7 @@ export function ChartStage({
           chartModel={chartModel}
           activeCaseId={activeCaseId}
           triggerGenerate={triggerGenerate}
+          onAskExplore={onAskExplore}
         />
       ) : mode === 'sanhe' ? (
         <div className="chart-frame chart-frame--sanhe" data-slot="chart-canvas">
@@ -219,7 +216,7 @@ export function ChartStage({
           />
         </div>
       ) : mode === 'circle' ? (
-        <div className="chart-frame chart-frame--circular" data-slot="chart-canvas">
+        <div className="chart-frame chart-frame--circular" data-slot="chart-canvas" onClick={() => onSelectPalace?.(null)}>
           <div className="chart-mode-note">
             <p className="section-kicker">Circular Focus</p>
             <p>十二宫沿圆周展开，点选宫位查看三方四正；生年四化与向心、离心自化共同显示在圆盘中。</p>
